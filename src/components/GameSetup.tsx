@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import { GameSettings, GameMode, Player, PresetImage, RemoteLevel } from '../types'
 import { sanitizeFilenameForKey, preprocessImage } from '../utils/imageUtils'
 import { getLevels } from '../services/googleSheetsApi'
+import PixabaySearch from './PixabaySearch'
 import './GameSetup.css'
 
 interface GameSetupProps {
@@ -39,6 +40,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
     const [isProcessing, setIsProcessing] = useState(false)
     const [remoteLevels, setRemoteLevels] = useState<RemoteLevel[]>([])
     const [isLoadingLevels, setIsLoadingLevels] = useState(false)
+    const [showPixabaySearch, setShowPixabaySearch] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const basePath = (import.meta as any).env.BASE_URL || '/'
 
@@ -95,6 +97,21 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
         } catch {
             setIsProcessing(false)
             alert('讀取圖片失敗')
+        }
+    }
+
+    const handlePixabaySelect = async (url: string, name: string) => {
+        setIsProcessing(true)
+        setShowPixabaySearch(false)
+        try {
+            const processed = await preprocessImage(url, size)
+            setCustomImageSrc(processed)
+            setCustomImageName(name)
+            setSelectedImage(null)
+        } catch {
+            alert('圖片下載或處理失敗，可能是 CORS 限制或網路問題')
+        } finally {
+            setIsProcessing(false)
         }
     }
 
@@ -211,13 +228,22 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                                 onChange={handleCustomImageUpload}
                                 hidden
                             />
-                            <button
-                                className="upload-btn"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isProcessing}
-                            >
-                                {isProcessing ? '處理中...' : '📁 上傳自訂圖片'}
-                            </button>
+                            <div className="upload-buttons">
+                                <button
+                                    className="upload-btn"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isProcessing}
+                                >
+                                    {isProcessing ? '處理中...' : '📁 上傳自訂圖片'}
+                                </button>
+                                <button
+                                    className="search-online-btn"
+                                    onClick={() => setShowPixabaySearch(true)}
+                                    disabled={isProcessing}
+                                >
+                                    🔍 網路搜圖
+                                </button>
+                            </div>
                             {customImageSrc && (
                                 <div className="custom-preview">
                                     <img src={customImageSrc} alt="自訂圖片" />
@@ -264,6 +290,13 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                     {isProcessing ? '準備中...' : (isLoadingLevels ? '載入中...' : '🎮 開始遊戲')}
                 </button>
             </div>
+
+            {showPixabaySearch && (
+                <PixabaySearch
+                    onSelect={handlePixabaySelect}
+                    onClose={() => setShowPixabaySearch(false)}
+                />
+            )}
         </div>
     )
 }

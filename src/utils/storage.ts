@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
     PLAYER: 'huazondou_player',
     HIGH_SCORES: 'puzzleHighScores',
     MUTED: 'huazondou_muted',
+    PIXABAY_KEY: 'huazondou_pixabay_key',
 } as const
 
 export const storage = {
@@ -110,6 +111,23 @@ export const storage = {
             localStorage.setItem(STORAGE_KEYS.MUTED, String(muted))
         } catch (e) {
             console.warn('儲存靜音設定失敗:', e)
+        }
+    },
+
+    // Pixabay API Key
+    getPixabayKey(): string {
+        try {
+            return localStorage.getItem(STORAGE_KEYS.PIXABAY_KEY) || ''
+        } catch {
+            return ''
+        }
+    },
+
+    setPixabayKey(key: string): void {
+        try {
+            localStorage.setItem(STORAGE_KEYS.PIXABAY_KEY, key)
+        } catch (e) {
+            console.warn('儲存 Pixabay API Key 失敗:', e)
         }
     },
 }
