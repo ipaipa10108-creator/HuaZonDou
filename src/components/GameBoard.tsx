@@ -199,65 +199,66 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
                         const isCheatSelected = cheatFirstBlock?.row === row && cheatFirstBlock?.col === col
 
                         return (
-                            key = {`${row}-${col}`}
-                                className = {`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''}`}
-                    onClick={() => handleBlockClick(row, col)}
-                    data-row={row}
-                    data-col={col}
-                    data-value={value}
+                            <div
+                                key={`${row}-${col}`}
+                                className={`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''}`}
+                                onClick={() => handleBlockClick(row, col)}
+                                data-row={row}
+                                data-col={col}
+                                data-value={value}
                             >
-                    {!isEmpty && (
-                        settings.mode === 'number' ? (
-                            <span>{value}</span>
-                        ) : (
-                            imagePieces[value - 1] && imagePieces[value - 1] !== 'error_piece' && (
-                                <img src={imagePieces[value - 1]} alt={`Piece ${value}`} draggable={false} />
-                            )
+                                {!isEmpty && (
+                                    settings.mode === 'number' ? (
+                                        <span>{value}</span>
+                                    ) : (
+                                        imagePieces[value - 1] && imagePieces[value - 1] !== 'error_piece' && (
+                                            <img src={imagePieces[value - 1]} alt={`Piece ${value}`} draggable={false} />
+                                        )
+                                    )
+                                )}
+                            </div>
                         )
-                    )}
-                </div>
-                )
                     })}
 
-                {/* 顯示原圖 overlay */}
-                {showOriginal && settings.imageSource && (
-                    <div
-                        className="original-overlay"
-                        style={{ backgroundImage: `url(${settings.imageSource})` }}
-                    />
-                )}
-            </div>
+                    {/* 顯示原圖 overlay */}
+                    {showOriginal && settings.imageSource && (
+                        <div
+                            className="original-overlay"
+                            style={{ backgroundImage: `url(${settings.imageSource})` }}
+                        />
+                    )}
+                </div>
 
-            <div className="game-controls">
-                <button onClick={handleReset}>🔄 重置</button>
-                <button onClick={handleHint}>💡 提示</button>
-                {settings.mode === 'image' && (
-                    <button
-                        onClick={() => setShowOriginal(!showOriginal)}
-                        className={showOriginal ? 'active' : ''}
-                    >
-                        {showOriginal ? '🙈 隱藏原圖' : '👁️ 顯示原圖'}
+                <div className="game-controls">
+                    <button onClick={handleReset}>🔄 重置</button>
+                    <button onClick={handleHint}>💡 提示</button>
+                    {settings.mode === 'image' && (
+                        <button
+                            onClick={() => setShowOriginal(!showOriginal)}
+                            className={showOriginal ? 'active' : ''}
+                        >
+                            {showOriginal ? '🙈 隱藏原圖' : '👁️ 顯示原圖'}
+                        </button>
+                    )}
+                    <button onClick={handleColorChange}>🎨 換色</button>
+                    <button onClick={toggleMute} className={muted ? 'active' : ''}>
+                        {muted ? '🔇 靜音' : '🔊 音效'}
                     </button>
-                )}
-                <button onClick={handleColorChange}>🎨 換色</button>
-                <button onClick={toggleMute} className={muted ? 'active' : ''}>
-                    {muted ? '🔇 靜音' : '🔊 音效'}
-                </button>
-                <button
-                    onClick={handleToggleCheat}
-                    className={`cheat-btn ${gameState.cheatEnabled ? 'active' : ''}`}
-                >
-                    🃏 作弊
-                </button>
-                <button onClick={onBackToSetup}>🏠 返回</button>
-            </div>
+                    <button
+                        onClick={handleToggleCheat}
+                        className={`cheat-btn ${gameState.cheatEnabled ? 'active' : ''}`}
+                    >
+                        🃏 作弊
+                    </button>
+                    <button onClick={onBackToSetup}>🏠 返回</button>
+                </div>
 
-            <HighScores
-                mode={settings.mode}
-                imageIdentifier={settings.imageIdentifier || ''}
-                size={settings.size}
-            />
-        </div>
+                <HighScores
+                    mode={settings.mode}
+                    imageIdentifier={settings.imageIdentifier || ''}
+                    size={settings.size}
+                />
+            </div>
         </div >
     )
 }
