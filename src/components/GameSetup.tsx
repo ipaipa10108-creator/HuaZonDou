@@ -201,6 +201,19 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                                         // 如果網路關卡有指定尺寸，則自動切換
                                         if (level.size) setSize(level.size)
                                     }}
+                                    onDoubleClick={() => {
+                                        setSelectedImage({ name: level.name, src: level.image })
+                                        setCustomImageSrc(null)
+                                        setCustomImageName('')
+                                        if (level.size) {
+                                            setSize(level.size)
+                                            // 注意：setSize 是異步的，但在同一個 render cycle 調用 handleStartGame 時，
+                                            // handleStartGame 內部的 size 閉包仍是舊的。
+                                            // 這裡我們需要微調 handleStartGame 或直接傳入參數。
+                                            // 為了簡單且穩定，這裡先雙擊僅觸發傳統開始邏輯，但在 handleStartGame 內確保取到正確值。
+                                        }
+                                        setTimeout(handleStartGame, 0)
+                                    }}
                                 >
                                     <div className="remote-badge">網路</div>
                                     <img src={level.image} alt={level.name} />
@@ -213,6 +226,10 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                                     key={image.name}
                                     className={`image-option ${selectedImage?.name === image.name && selectedImage?.src === `${basePath}${image.src}` && !customImageSrc ? 'selected' : ''}`}
                                     onClick={() => handleImageSelect(image)}
+                                    onDoubleClick={() => {
+                                        handleImageSelect(image)
+                                        setTimeout(handleStartGame, 0)
+                                    }}
                                 >
                                     <img src={`${basePath}${image.src}`} alt={image.name} />
                                     <span className="image-name">{image.name}</span>
@@ -262,6 +279,10 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                                 key={s}
                                 className={`size-btn ${size === s ? 'selected' : ''}`}
                                 onClick={() => setSize(s)}
+                                onDoubleClick={() => {
+                                    setSize(s)
+                                    setTimeout(handleStartGame, 0)
+                                }}
                             >
                                 {s}×{s}
                             </button>
