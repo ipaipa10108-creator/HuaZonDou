@@ -46,55 +46,61 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const rawRecords = data.records || data.data || []
 
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
-            const timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
-            const tsRaw = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
+            const timeRaw = String(item.time || item['通關時間'] || item['時間'] || '00:00');
+            const tsRaw = String(item.timestamp || item['提交時間'] || item['時間戳記'] || '');
 
             let formattedTime = '00:00';
             let dateStr = '';
 
-            // 1. 處理通關時間 (修正 Google Sheets 將 MM:SS 誤判為 HH:MM:SS 的偏移)
-            if (typeof timeRaw === 'string' && timeRaw.includes('T')) {
-                try {
-                    const date = new Date(timeRaw);
-                    // 重要修正：1:31 在 Sheets 被視為 01:31:00 (1小時31分0秒)
-                    // 所以：Hour 代表「分」，Minute 代表「秒」
-                    const mins = date.getUTCHours();
-                    const secs = date.getUTCMinutes();
-                    formattedTime = `${mins}分${secs}秒`;
-                } catch (e) {
-                    formattedTime = String(timeRaw);
+            // 1. 處理通關時間 (絕對不使用 new Date() 解析，避免時區偏移)
+            if (timeRaw.includes('T')) {
+                // ISO 格式：1899-12-30T01:31:00.000Z
+                // 我們只關心時間部分 HH:MM:SS
+                const timePart = timeRaw.split('T')[1] || '';
+                const parts = timePart.split(':');
+                if (parts.length >= 2) {
+                    // Sheets 的轉型特性：1:31 (MM:SS) 會變成 01:31:00 (HH:MM:SS)
+                    // 所以：第一位是分，第二位是秒
+                    const mm = parseInt(parts[0]);
+                    const ss = parseInt(parts[1]);
+                    formattedTime = `${mm}分${ss}秒`;
+                } else {
+                    formattedTime = timeRaw;
                 }
-            } else if (typeof timeRaw === 'string' && timeRaw.includes(':')) {
+            } else if (timeRaw.includes(':')) {
+                // 普通冒號格式
                 const parts = timeRaw.split(':');
                 if (parts.length === 3) {
-                    // HH:MM:SS 格式 -> 轉為 分:秒
-                    const h = parseInt(parts[0]);
-                    const m = parseInt(parts[1]);
-                    const s = parseInt(parts[2]);
-                    if (h > 0) {
-                        formattedTime = `${h}分${m}秒`;
-                    } else {
-                        formattedTime = `${m}分${s}秒`;
-                    }
+                    // HH:MM:SS
+                    formattedTime = `${parseInt(parts[1])}分${parseInt(parts[2])}秒`;
                 } else if (parts.length === 2) {
-                    // MM:SS 格式
+                    // MM:SS
                     formattedTime = `${parseInt(parts[0])}分${parseInt(parts[1])}秒`;
+                } else {
+                    formattedTime = timeRaw;
                 }
             } else {
-                formattedTime = String(timeRaw);
+                formattedTime = timeRaw;
             }
 
-            // 2. 處理日期格式 (提交時間：僅提取 YYYY/MM/DD)
+            // 2. 處理提交日期 (僅提取 YYYY/MM/DD)
             if (tsRaw) {
                 try {
+                    // 提交時間是正常的當前時間，可以用 Date 解析
                     const d = new Date(tsRaw);
                     if (!isNaN(d.getTime())) {
                         dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
                     }
-                } catch (e) { }
+                } catch (e) {
+                    // 如果解析失敗，試著用簡單的字串截取
+                    const match = tsRaw.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+                    if (match) {
+                        dateStr = `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
+                    }
+                }
             }
 
-            // 3. 按照使用者需求合併顯示： "1分31秒 (2025/12/30)"
+            // 3. 按照需求合併顯示： "1分31秒 (2025/12/30)"
             const finalDisplayTime = dateStr ? `${formattedTime} (${dateStr})` : formattedTime;
 
             return {
