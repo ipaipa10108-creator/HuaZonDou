@@ -15,14 +15,16 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
     const [isLoading, setIsLoading] = useState(false)
     const [showMore, setShowMore] = useState(false)
 
-    // 產生與提交時一致的關卡識別名稱
-    const levelName = imageDisplayName || (mode === 'number' ? '數字模式' : '圖片模式')
-    const levelKey = `${levelName} (${size}x${size})`
-
     useEffect(() => {
         const loadScores = async () => {
+            const currentLevelName = imageDisplayName || (mode === 'number' ? '數字模式' : '圖片模式')
+            const currentLevelKey = `${currentLevelName} (${size}x${size})`
+
+            console.log(`[排行榜查詢] 正在取得關卡: "${currentLevelKey}"`)
             setIsLoading(true)
-            const remoteScores = await getLeaderboard(levelKey)
+            const remoteScores = await getLeaderboard(currentLevelKey)
+            console.log(`[排行榜結果] 取得數據數量: ${remoteScores.length}`, remoteScores)
+
             // 排序：時間優先（從小到大）
             const sorted = [...remoteScores].sort((a, b) => {
                 const getTimeInSeconds = (timeStr: string) => {
@@ -41,7 +43,7 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
         }
         loadScores()
         setShowMore(false) // 切換關卡時重置展開狀態
-    }, [mode, imageIdentifier, size, levelKey])
+    }, [mode, imageIdentifier, size, imageDisplayName])
 
     const displayedScores = showMore ? scores.slice(0, 100) : scores.slice(0, 10)
 
