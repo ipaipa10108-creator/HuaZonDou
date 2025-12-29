@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { GameMode, HighScore } from '../types'
 import { storage } from '../utils/storage'
 import './HighScores.css'

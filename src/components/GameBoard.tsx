@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { GameSettings, GameState, Position, ColorTheme } from '../types'
 import { useGame } from '../hooks/useGame'
 import { useSoundManager } from '../hooks/useSoundManager'

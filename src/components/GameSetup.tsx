@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { GameSettings, GameMode, Player, PresetImage } from '../types'
 import { sanitizeFilenameForKey, preprocessImage } from '../utils/imageUtils'
 import './GameSetup.css'
