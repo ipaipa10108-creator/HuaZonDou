@@ -45,7 +45,7 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
                 // 2. 通關時間
                 const getTimeInSeconds = (timeStr: string) => {
-                    // 處理 "1分31秒" 格式
+                    // 從字串中提取 "X分Y秒" 的部分
                     const minuteMatch = timeStr.match(/(\d+)分/);
                     const secondMatch = timeStr.match(/(\d+)秒/);
                     let totalSeconds = 0;
@@ -54,8 +54,8 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
                     if (totalSeconds > 0) return totalSeconds;
 
-                    // 備用：處理原有 "MM:SS" 格式
-                    const parts = timeStr.split(':')
+                    // 備用解析：處理沒被轉換過的 MM:SS
+                    const parts = timeStr.replace(/\s*\(.*\)/, '').split(':')
                     if (parts.length === 2) {
                         return (parseInt(parts[0]) * 60) + parseInt(parts[1])
                     }

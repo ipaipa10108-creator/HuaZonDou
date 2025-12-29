@@ -46,36 +46,45 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const rawRecords = data.records || data.data || []
 
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
-            let timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
-            let formattedTime = '00:00';
+            const timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
+            const tsRaw = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
 
-            // 處理 Google Sheets 傳回的日期字串
+            let formattedTime = '00:00';
+            let dateStr = '';
+
+            // 1. 處理通關時間 (修正 Google Sheets 將 MM:SS 誤判為 HH:MM:SS 的偏移)
             if (typeof timeRaw === 'string' && timeRaw.includes('T')) {
                 try {
                     const date = new Date(timeRaw);
-                    // 根據使用者截圖，1:31 在 Sheets 被視為 01:31:00 (HH:MM:SS)
-                    // 所以獲取分鐘和秒數即可
-                    const m = date.getUTCMinutes();
-                    const s = date.getUTCSeconds();
-                    formattedTime = `${m}分${s}秒`;
+                    // 重要修正：1:31 在 Sheets 被視為 01:31:00 (1小時31分0秒)
+                    // 所以：Hour 代表「分」，Minute 代表「秒」
+                    const mins = date.getUTCHours();
+                    const secs = date.getUTCMinutes();
+                    formattedTime = `${mins}分${secs}秒`;
                 } catch (e) {
                     formattedTime = String(timeRaw);
                 }
             } else if (typeof timeRaw === 'string' && timeRaw.includes(':')) {
                 const parts = timeRaw.split(':');
-                if (parts.length === 2) {
+                if (parts.length === 3) {
+                    // HH:MM:SS 格式 -> 轉為 分:秒
+                    const h = parseInt(parts[0]);
+                    const m = parseInt(parts[1]);
+                    const s = parseInt(parts[2]);
+                    if (h > 0) {
+                        formattedTime = `${h}分${m}秒`;
+                    } else {
+                        formattedTime = `${m}分${s}秒`;
+                    }
+                } else if (parts.length === 2) {
+                    // MM:SS 格式
                     formattedTime = `${parseInt(parts[0])}分${parseInt(parts[1])}秒`;
-                } else if (parts.length === 3) {
-                    // HH:MM:SS 情況下，中間的是分，最後的是秒
-                    formattedTime = `${parseInt(parts[1])}分${parseInt(parts[2])}秒`;
                 }
             } else {
                 formattedTime = String(timeRaw);
             }
 
-            // 處理日期格式
-            const tsRaw = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
-            let dateStr = '';
+            // 2. 處理日期格式 (提交時間：僅提取 YYYY/MM/DD)
             if (tsRaw) {
                 try {
                     const d = new Date(tsRaw);
@@ -85,10 +94,13 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
                 } catch (e) { }
             }
 
+            // 3. 按照使用者需求合併顯示： "1分31秒 (2025/12/30)"
+            const finalDisplayTime = dateStr ? `${formattedTime} (${dateStr})` : formattedTime;
+
             return {
                 playerId: String(item.playerId || item['ID'] || item['帳號'] || '神秘玩家'),
                 level: String(item.level || item['關卡'] || item['關卡名稱'] || level),
-                time: formattedTime,
+                time: finalDisplayTime,
                 moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
                 cheatCount: parseInt(String(item.cheatCount || item['作弊次數'] || item['作弊'] || '0')),
                 timestamp: dateStr
