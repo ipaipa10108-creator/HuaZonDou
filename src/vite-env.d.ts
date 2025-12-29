@@ -4,7 +4,3 @@ interface ImportMetaEnv {
     readonly VITE_GOOGLE_APP_SCRIPT_URL: string
     readonly VITE_BASE_URL: string
 }
-
-interface ImportMeta {
-    readonly env: ImportMetaEnv
-}
