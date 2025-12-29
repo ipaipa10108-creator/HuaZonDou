@@ -52,47 +52,34 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
             let formattedTime = '00:00';
             let dateStr = '';
 
-            // 1. 處理通關時間 (絕對不使用 new Date() 解析，避免時區偏移)
-            if (timeRaw.includes('T')) {
-                // ISO 格式：1899-12-30T01:31:00.000Z
-                // 我們只關心時間部分 HH:MM:SS
-                const timePart = timeRaw.split('T')[1] || '';
-                const parts = timePart.split(':');
-                if (parts.length >= 2) {
-                    // Sheets 的轉型特性：1:31 (MM:SS) 會變成 01:31:00 (HH:MM:SS)
-                    // 所以：第一位是分，第二位是秒
-                    const mm = parseInt(parts[0]);
-                    const ss = parseInt(parts[1]);
-                    formattedTime = `${mm}分${ss}秒`;
-                } else {
-                    formattedTime = timeRaw;
-                }
-            } else if (timeRaw.includes(':')) {
-                // 普通冒號格式
-                const parts = timeRaw.split(':');
-                if (parts.length === 3) {
-                    // HH:MM:SS
-                    formattedTime = `${parseInt(parts[1])}分${parseInt(parts[2])}秒`;
-                } else if (parts.length === 2) {
-                    // MM:SS
-                    formattedTime = `${parseInt(parts[0])}分${parseInt(parts[1])}秒`;
-                } else {
-                    formattedTime = timeRaw;
-                }
+            // 1. 處理通關時間 (使用 Regex 統一擷取 HH:MM:SS 部分，不論格式)
+            // 匹配例如 "01:31:00" 或 "1899-12-30T01:31:00" 或 "Sat Dec 30 1899 01:31:00"
+            const timeMatch = timeRaw.match(/(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+
+            if (timeMatch) {
+                // Sheets 的特性：1:31 (MM:SS) 會被儲存為 01:31:00 (HH:MM:SS)
+                // 所以：第一組是分，第二組是秒
+                const mins = parseInt(timeMatch[1]);
+                const secs = parseInt(timeMatch[2]);
+                formattedTime = `${mins}分${secs}秒`;
             } else {
-                formattedTime = timeRaw;
+                // 備用處理：如果是傳統 MM:SS 且沒有第三段秒
+                const simpleMatch = timeRaw.match(/(\d{1,2}):(\d{1,2})/);
+                if (simpleMatch) {
+                    formattedTime = `${parseInt(simpleMatch[1])}分${parseInt(simpleMatch[2])}秒`;
+                } else {
+                    formattedTime = timeRaw;
+                }
             }
 
             // 2. 處理提交日期 (僅提取 YYYY/MM/DD)
             if (tsRaw) {
                 try {
-                    // 提交時間是正常的當前時間，可以用 Date 解析
                     const d = new Date(tsRaw);
                     if (!isNaN(d.getTime())) {
                         dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
                     }
                 } catch (e) {
-                    // 如果解析失敗，試著用簡單的字串截取
                     const match = tsRaw.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
                     if (match) {
                         dateStr = `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
