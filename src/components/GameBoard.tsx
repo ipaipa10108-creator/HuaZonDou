@@ -122,10 +122,13 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
     const handleToggleCheat = () => {
         const result = toggleCheatMode()
         if (result.error) {
+            playCheatSound() // 提示不能使用的音效
             alert(result.error)
-        } else if (result.enabled) {
+        } else {
             playCheatSound()
-            alert('作弊模式已啟用！點擊任意兩個非空方塊進行交換。')
+            if (result.enabled) {
+                alert('作弊模式已啟用！點擊任意兩個非空方塊進行交換。')
+            }
         }
         setCheatFirstBlock(null)
     }

@@ -23,9 +23,9 @@ export function useGame(settings: GameSettings) {
     useEffect(() => {
         if (gameState.status === 'playing' && gameState.startTime) {
             timerRef.current = window.setInterval(() => {
-                setGameState(prev => {
+                setGameState((prev: GameState) => {
                     if (!prev.startTime) return prev
-                    const elapsed = Math.floor((Date.now() - prev.startTime.getTime()) / 1000)
+                    const elapsed = Math.floor((Date.now() - new Date(prev.startTime).getTime()) / 1000)
                     return { ...prev, elapsedSeconds: elapsed }
                 })
             }, 1000)
@@ -41,7 +41,7 @@ export function useGame(settings: GameSettings) {
 
     // 開始遊戲
     const startGame = useCallback(() => {
-        setGameState(prev => ({
+        setGameState((prev: GameState) => ({
             ...prev,
             startTime: new Date(),
             status: 'playing',
@@ -66,7 +66,7 @@ export function useGame(settings: GameSettings) {
 
         const isWin = checkWin(newBoard)
 
-        setGameState(prev => ({
+        setGameState((prev: GameState) => ({
             ...prev,
             board: newBoard,
             emptyPos: clickedPos,
@@ -109,7 +109,7 @@ export function useGame(settings: GameSettings) {
         newBoard[row1][col1] = value2
         newBoard[row2][col2] = value1
 
-        setGameState(prev => ({
+        setGameState((prev: GameState) => ({
             ...prev,
             board: newBoard,
             moves: prev.moves + 1,
@@ -121,31 +121,25 @@ export function useGame(settings: GameSettings) {
 
     // 切換作弊模式
     const toggleCheatMode = useCallback((): { enabled: boolean; error?: string } => {
-        let result = { enabled: false, error: undefined as string | undefined }
+        if (!gameState.startTime) {
+            return { enabled: false, error: '遊戲尚未開始' }
+        }
 
-        setGameState(prev => {
-            if (!prev.startTime) {
-                result.error = '遊戲尚未開始'
-                return prev
+        if (gameState.cheatCount === 0) {
+            const elapsed = Math.floor((Date.now() - gameState.startTime.getTime()) / 1000)
+            if (elapsed < 300) {
+                const remaining = 300 - elapsed
+                const mins = Math.floor(remaining / 60)
+                const secs = remaining % 60
+                return { enabled: false, error: `作弊模式將在 ${mins}分${secs}秒 後可用` }
             }
+        }
 
-            if (prev.cheatCount === 0) {
-                const elapsed = Math.floor((Date.now() - prev.startTime.getTime()) / 1000)
-                if (elapsed < 300) {
-                    const remaining = 300 - elapsed
-                    const mins = Math.floor(remaining / 60)
-                    const secs = remaining % 60
-                    result.error = `作弊模式將在 ${mins}分${secs}秒 後可用`
-                    return prev
-                }
-            }
+        const newEnabled = !gameState.cheatEnabled
+        setGameState((prev: GameState) => ({ ...prev, cheatEnabled: newEnabled }))
 
-            result.enabled = !prev.cheatEnabled
-            return { ...prev, cheatEnabled: !prev.cheatEnabled }
-        })
-
-        return result
-    }, [])
+        return { enabled: newEnabled }
+    }, [gameState.startTime, gameState.cheatCount, gameState.cheatEnabled])
 
     // 取得提示
     const getHintMove = useCallback((): Position | null => {
