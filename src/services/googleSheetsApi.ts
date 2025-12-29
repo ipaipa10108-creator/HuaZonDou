@@ -51,14 +51,30 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const rawRecords = data.records || data.data || []
 
         // 欄位對照映射表 (處理 Sheets 的中文欄位名)
-        const mappedRecords = rawRecords.map((item: any) => ({
-            playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
-            level: item.level || item['關卡'] || item['關卡名稱'] || level,
-            time: item.time || item['通關時間'] || item['時間'] || '00:00',
-            moves: parseInt(item.moves || item['步數'] || item['移動步數'] || '0'),
-            cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
-            timestamp: item.timestamp || item['提交時間'] || item['時間戳記'] || ''
-        }))
+        const mappedRecords = rawRecords.map((item: any) => {
+            // 處理 Google Sheets 可能將 MM:SS 誤判為日期的情況
+            let timeStr = item.time || item['通關時間'] || item['時間'] || '00:00';
+            if (typeof timeStr === 'string' && timeStr.includes('T') && timeStr.includes('1899')) {
+                // 如果是 ISO 格式且年份是 1899 (Sheets 的時間起始年)，嘗試還原為 MM:SS
+                try {
+                    const date = new Date(timeStr);
+                    const mins = date.getUTCMinutes().toString().padStart(2, '0');
+                    const secs = date.getUTCSeconds().toString().padStart(2, '0');
+                    timeStr = `${mins}:${secs}`;
+                } catch (e) {
+                    // 解析失敗則保持原樣
+                }
+            }
+
+            return {
+                playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
+                level: item.level || item['關卡'] || item['關卡名稱'] || level,
+                time: timeStr,
+                moves: parseInt(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0'),
+                cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
+                timestamp: item.timestamp || item['提交時間'] || item['時間戳記'] || ''
+            };
+        });
 
         return mappedRecords
     } catch (error) {

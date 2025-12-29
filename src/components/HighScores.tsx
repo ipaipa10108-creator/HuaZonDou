@@ -33,18 +33,32 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
             console.log(`[排行榜結果] 取得數據數量: ${remoteScores.length}`, remoteScores)
 
-            // 排序：時間優先（從小到大）
+            // 排序準則：
+            // 1. 作弊次數：少者優先 (0 次 > 1 次)
+            // 2. 通關時間：短者優先
+            // 3. 移動步數：少者優先
             const sorted = [...remoteScores].sort((a, b) => {
+                // 1. 作弊次數
+                if (a.cheatCount !== b.cheatCount) {
+                    return a.cheatCount - b.cheatCount;
+                }
+
+                // 2. 通關時間
                 const getTimeInSeconds = (timeStr: string) => {
                     const parts = timeStr.split(':')
                     if (parts.length === 2) {
                         return (parseInt(parts[0]) * 60) + parseInt(parts[1])
                     }
-                    return 0
+                    return 99999 // 解析失敗顯示在最後
                 }
                 const timeA = getTimeInSeconds(a.time)
                 const timeB = getTimeInSeconds(b.time)
-                return timeA - timeB
+                if (timeA !== timeB) {
+                    return timeA - timeB;
+                }
+
+                // 3. 移動步數
+                return a.moves - b.moves;
             })
             setScores(sorted)
             setIsLoading(false)
