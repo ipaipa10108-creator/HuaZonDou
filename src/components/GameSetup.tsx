@@ -36,10 +36,11 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
     const [selectedImage, setSelectedImage] = useState<PresetImage | null>(null)
     const [customImageSrc, setCustomImageSrc] = useState<string | null>(null)
     const [customImageName, setCustomImageName] = useState('')
+    const [isProcessing, setIsProcessing] = useState(false)
     const [remoteLevels, setRemoteLevels] = useState<RemoteLevel[]>([])
     const [isLoadingLevels, setIsLoadingLevels] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const basePath = import.meta.env.BASE_URL || '/'
+    const basePath = (import.meta as any).env.BASE_URL || '/'
 
     // 載入網路關卡
     useEffect(() => {

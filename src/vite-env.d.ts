@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
     readonly VITE_GOOGLE_APP_SCRIPT_URL: string
-    // 其他自訂變數...
+    readonly BASE_URL: string
 }
 
 interface ImportMeta {
