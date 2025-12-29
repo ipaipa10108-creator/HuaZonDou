@@ -50,89 +50,74 @@ export function useGame(settings: GameSettings) {
 
     // 移動方塊
     const moveBlock = useCallback((row: number, col: number): MoveResult | null => {
-        let result: MoveResult | null = null
+        if (gameState.status !== 'playing') return null
 
-        setGameState(prev => {
-            if (prev.status !== 'playing') return prev
+        const clickedPos: Position = { row, col }
+        if (!isAdjacent(clickedPos, gameState.emptyPos)) {
+            return null
+        }
 
-            const clickedPos: Position = { row, col }
-            if (!isAdjacent(clickedPos, prev.emptyPos)) {
-                return prev
-            }
+        const newBoard = gameState.board.map(r => [...r])
+        const movedValue = newBoard[row][col]
 
-            const newBoard = prev.board.map(r => [...r])
-            const movedValue = newBoard[row][col]
+        // 交換
+        newBoard[gameState.emptyPos.row][gameState.emptyPos.col] = movedValue
+        newBoard[row][col] = 0
 
-            // 交換
-            newBoard[prev.emptyPos.row][prev.emptyPos.col] = movedValue
-            newBoard[row][col] = 0
+        const isWin = checkWin(newBoard)
 
-            const newEmptyPos = { row, col }
-            const newMoves = prev.moves + 1
+        setGameState(prev => ({
+            ...prev,
+            board: newBoard,
+            emptyPos: clickedPos,
+            moves: prev.moves + 1,
+            status: isWin ? 'complete' : 'playing',
+        }))
 
-            result = {
-                success: true,
-                oldEmptyPos: prev.emptyPos,
-                newEmptyPos,
-                movedValue,
-            }
-
-            const isWin = checkWin(newBoard)
-
-            return {
-                ...prev,
-                board: newBoard,
-                emptyPos: newEmptyPos,
-                moves: newMoves,
-                status: isWin ? 'complete' : 'playing',
-            }
-        })
-
-        return result
-    }, [])
+        return {
+            success: true,
+            oldEmptyPos: gameState.emptyPos,
+            newEmptyPos: clickedPos,
+            movedValue,
+        }
+    }, [gameState.board, gameState.emptyPos, gameState.status])
 
     // 作弊交換
     const cheatSwap = useCallback((row1: number, col1: number, row2: number, col2: number): boolean => {
-        let success = false
+        if (gameState.status !== 'playing') return false
 
-        setGameState(prev => {
-            if (prev.status !== 'playing') return prev
+        const size = settings.size
+        if (row1 < 0 || row1 >= size || col1 < 0 || col1 >= size ||
+            row2 < 0 || row2 >= size || col2 < 0 || col2 >= size) {
+            return false
+        }
 
-            const size = settings.size
-            if (row1 < 0 || row1 >= size || col1 < 0 || col1 >= size ||
-                row2 < 0 || row2 >= size || col2 < 0 || col2 >= size) {
-                return prev
-            }
+        if (row1 === row2 && col1 === col2) return false
 
-            if (row1 === row2 && col1 === col2) return prev
+        const value1 = gameState.board[row1][col1]
+        const value2 = gameState.board[row2][col2]
 
-            const value1 = prev.board[row1][col1]
-            const value2 = prev.board[row2][col2]
+        if (value1 === 0 || value2 === 0) return false
 
-            if (value1 === 0 || value2 === 0) return prev
+        // 檢查時間限制（首次作弊需等待5分鐘）
+        if (gameState.cheatCount === 0 && gameState.startTime) {
+            const elapsed = Math.floor((Date.now() - gameState.startTime.getTime()) / 1000)
+            if (elapsed < 300) return false
+        }
 
-            // 檢查時間限制（首次作弊需等待5分鐘）
-            if (prev.cheatCount === 0 && prev.startTime) {
-                const elapsed = Math.floor((Date.now() - prev.startTime.getTime()) / 1000)
-                if (elapsed < 300) return prev
-            }
+        const newBoard = gameState.board.map(r => [...r])
+        newBoard[row1][col1] = value2
+        newBoard[row2][col2] = value1
 
-            const newBoard = prev.board.map(r => [...r])
-            newBoard[row1][col1] = value2
-            newBoard[row2][col2] = value1
+        setGameState(prev => ({
+            ...prev,
+            board: newBoard,
+            moves: prev.moves + 1,
+            cheatCount: prev.cheatCount + 1,
+        }))
 
-            success = true
-
-            return {
-                ...prev,
-                board: newBoard,
-                moves: prev.moves + 1,
-                cheatCount: prev.cheatCount + 1,
-            }
-        })
-
-        return success
-    }, [settings.size])
+        return true
+    }, [gameState.board, gameState.status, gameState.cheatCount, gameState.startTime, settings.size])
 
     // 切換作弊模式
     const toggleCheatMode = useCallback((): { enabled: boolean; error?: string } => {

@@ -30,6 +30,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
         playMoveSound,
         playCheatSound,
         playWinSound,
+        playColorChangeSound,
         playGameStartSound,
     } = useSoundManager()
 
@@ -133,6 +134,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
         const colors: ColorTheme[] = ['default', 'blue', 'red', 'orange']
         const currentIndex = colors.indexOf(colorTheme)
         setColorTheme(colors[(currentIndex + 1) % colors.length])
+        playColorChangeSound()
     }
 
     // 重置
