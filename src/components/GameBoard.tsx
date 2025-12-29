@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { GameSettings, Player, GameState, Position, ColorTheme } from '../types'
+import { GameSettings, GameState, Position, ColorTheme } from '../types'
 import { useGame } from '../hooks/useGame'
 import { useSoundManager } from '../hooks/useSoundManager'
 import { useImageProcessor } from '../hooks/useImageProcessor'
