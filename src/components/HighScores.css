@@ -1,0 +1,96 @@
+.high-scores-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.high-scores-container h3 {
+    color: #b8860b;
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+    text-align: center;
+}
+
+.empty-scores {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.scores-table-wrapper {
+    overflow-x: auto;
+}
+
+.scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.scores-table th {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.scores-table td {
+    padding: 12px 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.scores-table tr:last-child td {
+    border-bottom: none;
+}
+
+.rank-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.rank-1 .rank-badge {
+    background: #f1c40f;
+    color: #1a1a2e;
+}
+
+.rank-2 .rank-badge {
+    background: #95a5a6;
+    color: #1a1a2e;
+}
+
+.rank-3 .rank-badge {
+    background: #a0522d;
+    color: #1a1a2e;
+}
+
+.time-cell {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    color: #fff;
+}
+
+.cheat-badge {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.cheat-badge.used {
+    background: rgba(231, 76, 60, 0.2);
+    color: #ff6b6b;
+}
+
+.cheat-badge.none {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}

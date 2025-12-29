@@ -1,0 +1,43 @@
+# 依賴項目
+node_modules/
+.pnp
+.pnp.js
+
+# 建構輸出
+dist/
+dist-ssr/
+build/
+*.local
+
+# 環境變數（含敏感資訊）
+.env
+.env.local
+.env.*.local
+
+# 編輯器設定
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 作業系統檔案
+.DS_Store
+Thumbs.db
+*.log
+
+# TypeScript 暫存
+*.tsbuildinfo
+
+# 測試
+coverage/
+
+# 本地備份
+temp_backup/
+
+# 舊版本備份檔案（純 JavaScript 版本）
+*.old
+*.bak
