@@ -8,7 +8,6 @@ import './GameBoard.css'
 
 interface GameBoardProps {
     settings: GameSettings
-    player: Player
     onComplete: (gameState: GameState) => void
     onBackToSetup: () => void
 }

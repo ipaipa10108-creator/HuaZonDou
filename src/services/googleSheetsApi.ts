@@ -12,7 +12,7 @@ export async function submitScore(result: GameResult): Promise<{ success: boolea
     }
 
     try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
+        await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors', // Google Apps Script 需要 no-cors 模式
             headers: {
