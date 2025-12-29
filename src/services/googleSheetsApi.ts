@@ -51,9 +51,9 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const rawRecords = data.records || data.data || []
 
         // 欄位對照映射表 (處理 Sheets 的中文欄位名)
-        const mappedRecords = rawRecords.map((item: any) => {
+        const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
             // 處理 Google Sheets 可能將 MM:SS 誤判為日期的情況
-            let timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
+            const timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
             let formattedTime = '00:00';
 
             if (typeof timeRaw === 'string' && timeRaw.includes('T') && timeRaw.includes('1899')) {
@@ -64,12 +64,12 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
                     const totalSeconds = (date.getUTCHours() * 3600) + (date.getUTCMinutes() * 60) + date.getUTCSeconds();
 
                     // 考慮到 Sheets 的 1:31 可能被儲存為 01:31:00 (H:M:S) 或 00:01:31
-                    // 但對於華榮道，超過一小時的機率極低，我們直接取商數為分，餘數為秒
+                    // 這裡取商數為分，餘數為秒
                     const mins = Math.floor(totalSeconds / 60);
                     const secs = totalSeconds % 60;
                     formattedTime = `${mins}分${secs}秒`;
                 } catch (e) {
-                    formattedTime = timeRaw;
+                    formattedTime = String(timeRaw);
                 }
             } else if (typeof timeRaw === 'string' && timeRaw.includes(':')) {
                 // 處理原始 MM:SS 格式
@@ -88,11 +88,11 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
                     }
                 }
             } else {
-                formattedTime = timeRaw;
+                formattedTime = String(timeRaw);
             }
 
             // 處理日期格式 (提交時間)
-            let timestamp = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
+            const timestamp = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
             let dateStr = '';
             if (timestamp) {
                 try {
@@ -106,11 +106,11 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
             }
 
             return {
-                playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
-                level: item.level || item['關卡'] || item['關卡名稱'] || level,
+                playerId: String(item.playerId || item['ID'] || item['帳號'] || '神秘玩家'),
+                level: String(item.level || item['關卡'] || item['關卡名稱'] || level),
                 time: formattedTime, // 儲存格式化後的字串，例如 "1分31秒"
-                moves: parseInt(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0'),
-                cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
+                moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
+                cheatCount: parseInt(String(item.cheatCount || item['作弊次數'] || item['作弊'] || '0')),
                 timestamp: dateStr // 儲存 YYYY/MM/DD
             };
         });
@@ -121,6 +121,7 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         return []
     }
 }
+
 /**
  * 取得網路關卡列表
  */
