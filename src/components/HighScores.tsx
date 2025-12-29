@@ -13,7 +13,10 @@ export default function HighScores({ mode, imageIdentifier, size }: HighScoresPr
     const [scores, setScores] = useState<GameResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showMore, setShowMore] = useState(false)
-    const levelKey = `${mode}-${imageIdentifier}-${size}`
+
+    // 產生與提交時一致的關卡識別名稱
+    const levelDisplayName = settings.imageDisplayName || (settings.mode === 'number' ? '數字模式' : '圖片模式')
+    const levelKey = `${levelDisplayName} (${settings.size}x${settings.size})`
 
     useEffect(() => {
         const loadScores = async () => {
