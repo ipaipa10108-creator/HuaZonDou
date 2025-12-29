@@ -45,11 +45,21 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
                 // 2. 通關時間
                 const getTimeInSeconds = (timeStr: string) => {
+                    // 處理 "1分31秒" 格式
+                    const minuteMatch = timeStr.match(/(\d+)分/);
+                    const secondMatch = timeStr.match(/(\d+)秒/);
+                    let totalSeconds = 0;
+                    if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60;
+                    if (secondMatch) totalSeconds += parseInt(secondMatch[1]);
+
+                    if (totalSeconds > 0) return totalSeconds;
+
+                    // 備用：處理原有 "MM:SS" 格式
                     const parts = timeStr.split(':')
                     if (parts.length === 2) {
                         return (parseInt(parts[0]) * 60) + parseInt(parts[1])
                     }
-                    return 99999 // 解析失敗顯示在最後
+                    return 99999
                 }
                 const timeA = getTimeInSeconds(a.time)
                 const timeB = getTimeInSeconds(b.time)
@@ -106,7 +116,9 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
                                     <span className="rank-badge">#{index + 1}</span>
                                 </td>
                                 <td className="player-cell">{score.playerId}</td>
-                                <td className="time-cell">{score.time}</td>
+                                <td className="time-cell">
+                                    {score.time} {score.timestamp && <span className="date-hint">({score.timestamp})</span>}
+                                </td>
                                 <td>{score.moves}</td>
                                 <td>
                                     {score.cheatCount > 0 ? (

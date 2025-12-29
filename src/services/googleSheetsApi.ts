@@ -53,26 +53,66 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         // 欄位對照映射表 (處理 Sheets 的中文欄位名)
         const mappedRecords = rawRecords.map((item: any) => {
             // 處理 Google Sheets 可能將 MM:SS 誤判為日期的情況
-            let timeStr = item.time || item['通關時間'] || item['時間'] || '00:00';
-            if (typeof timeStr === 'string' && timeStr.includes('T') && timeStr.includes('1899')) {
-                // 如果是 ISO 格式且年份是 1899 (Sheets 的時間起始年)，嘗試還原為 MM:SS
+            let timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
+            let formattedTime = '00:00';
+
+            if (typeof timeRaw === 'string') {
+                if (timeRaw.includes('T') && timeRaw.includes('1899')) {
+                    // 處理 ISO 格式 (Sheets 自動轉型)
+                    const date = new Date(timeRaw);
+                    // Sheets 可能將 1:31 視為 01:31:00 (H:M:S)
+                    const hours = date.getUTCHours();
+                    const mins = date.getUTCMinutes();
+                    const secs = date.getUTCSeconds();
+
+                    if (hours > 0) {
+                        // 如果有小時，表示原先的分位被誤判入小時
+                        formattedTime = `${hours}分${mins}秒`;
+                    } else {
+                        formattedTime = `${mins}分${secs}秒`;
+                    }
+                } else if (timeRaw.includes(':')) {
+                    // 處理原始 MM:SS 格式
+                    const parts = timeRaw.split(':');
+                    if (parts.length === 2) {
+                        formattedTime = `${parseInt(parts[0])}分${parseInt(parts[1])}秒`;
+                    } else if (parts.length === 3) {
+                        // HH:MM:SS
+                        const h = parseInt(parts[0]);
+                        const m = parseInt(parts[1]);
+                        const s = parseInt(parts[2]);
+                        if (h > 0) {
+                            formattedTime = `${h * 60 + m}分${s}秒`;
+                        } else {
+                            formattedTime = `${m}分${s}秒`;
+                        }
+                    }
+                } else {
+                    formattedTime = timeRaw;
+                }
+            }
+
+            // 處理日期格式 (提交時間)
+            let timestamp = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
+            let dateStr = '';
+            if (timestamp) {
                 try {
-                    const date = new Date(timeStr);
-                    const mins = date.getUTCMinutes().toString().padStart(2, '0');
-                    const secs = date.getUTCSeconds().toString().padStart(2, '0');
-                    timeStr = `${mins}:${secs}`;
+                    const d = new Date(timestamp);
+                    if (!isNaN(d.getTime())) {
+                        dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+                    }
                 } catch (e) {
-                    // 解析失敗則保持原樣
+                    // 解析失敗則不顯示日期
                 }
             }
 
             return {
                 playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
                 level: item.level || item['關卡'] || item['關卡名稱'] || level,
-                time: timeStr,
+                time: formattedTime, // 儲存格式化後的字串，例如 "1分31秒"
                 moves: parseInt(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0'),
                 cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
-                timestamp: item.timestamp || item['提交時間'] || item['時間戳記'] || ''
+                timestamp: dateStr // 儲存 YYYY/MM/DD
             };
         });
 
