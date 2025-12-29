@@ -5,6 +5,7 @@ import GameBoard from './components/GameBoard'
 import GameComplete from './components/GameComplete'
 import { GameSettings, Player, GameState } from './types'
 import { storage } from './utils/storage'
+import { useSoundManager } from './hooks/useSoundManager'
 
 type AppView = 'login' | 'setup' | 'game' | 'complete'
 
@@ -17,6 +18,7 @@ function App() {
         moves: number
         cheatCount: number
     } | null>(null)
+    const soundManager = useSoundManager()
 
     // 檢查是否已有存儲的玩家資訊
     useEffect(() => {
@@ -90,6 +92,7 @@ function App() {
                     settings={gameSettings}
                     onComplete={handleGameComplete}
                     onBackToSetup={handleBackToSetup}
+                    soundManager={soundManager}
                 />
             )}
 

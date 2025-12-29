@@ -10,9 +10,10 @@ interface GameBoardProps {
     settings: GameSettings
     onComplete: (gameState: GameState) => void
     onBackToSetup: () => void
+    soundManager: any
 }
 
-export default function GameBoard({ settings, onComplete, onBackToSetup }: GameBoardProps) {
+export default function GameBoard({ settings, onComplete, onBackToSetup, soundManager }: GameBoardProps) {
     const {
         gameState,
         startGame,
@@ -32,7 +33,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
         playWinSound,
         playColorChangeSound,
         playGameStartSound,
-    } = useSoundManager()
+    } = soundManager
 
     const { imagePieces, processImage, isProcessing } = useImageProcessor()
 
@@ -112,7 +113,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
         const hint = getHintMove()
         if (hint) {
             setHintPos(hint)
-            playMoveSound()
+            playCheatSound() // 提示音效
             setTimeout(() => setHintPos(null), 3000)
         }
     }
