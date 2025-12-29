@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import { GameSettings, GameMode, Player, PresetImage } from '../types'
 import { sanitizeFilenameForKey, preprocessImage } from '../utils/imageUtils'
 import './GameSetup.css'
@@ -52,7 +52,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
         setCustomImageName('')
     }
 
-    const handleCustomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCustomImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -133,14 +133,14 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                     <h2>選擇遊戲模式</h2>
                     <div className="mode-buttons">
                         <button
-                            className={`mode - btn ${mode === 'number' ? 'selected' : ''} `}
+                            className={`mode-btn ${mode === 'number' ? 'selected' : ''}`}
                             onClick={() => setMode('number')}
                         >
                             <span className="mode-icon">🔢</span>
                             <span>數字模式</span>
                         </button>
                         <button
-                            className={`mode - btn ${mode === 'image' ? 'selected' : ''} `}
+                            className={`mode-btn ${mode === 'image' ? 'selected' : ''}`}
                             onClick={() => setMode('image')}
                         >
                             <span className="mode-icon">🖼️</span>
@@ -156,10 +156,10 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                             {PRESET_IMAGES.map((image) => (
                                 <div
                                     key={image.name}
-                                    className={`image - option ${selectedImage?.name === image.name && !customImageSrc ? 'selected' : ''} `}
+                                    className={`image-option ${selectedImage?.name === image.name && !customImageSrc ? 'selected' : ''}`}
                                     onClick={() => handleImageSelect(image)}
                                 >
-                                    <img src={`${basePath}${image.src} `} alt={image.name} />
+                                    <img src={`${basePath}${image.src}`} alt={image.name} />
                                     <span className="image-name">{image.name}</span>
                                 </div>
                             ))}
@@ -195,7 +195,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                         {SIZES.map((s) => (
                             <button
                                 key={s}
-                                className={`size - btn ${size === s ? 'selected' : ''} `}
+                                className={`size-btn ${size === s ? 'selected' : ''}`}
                                 onClick={() => setSize(s)}
                             >
                                 {s}×{s}

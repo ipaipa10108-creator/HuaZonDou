@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 import './LoginPage.css'
 
 interface LoginPageProps {
@@ -9,7 +9,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     const [playerId, setPlayerId] = useState('')
     const [error, setError] = useState('')
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
 
         const trimmedId = playerId.trim()
