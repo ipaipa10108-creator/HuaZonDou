@@ -47,7 +47,20 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const response = await fetch(url)
         const data = await response.json()
         console.log(`[API 回應] 原始數據:`, data)
-        return data.records || []
+
+        const rawRecords = data.records || data.data || []
+
+        // 欄位對照映射表 (處理 Sheets 的中文欄位名)
+        const mappedRecords = rawRecords.map((item: any) => ({
+            playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
+            level: item.level || item['關卡'] || item['關卡名稱'] || level,
+            time: item.time || item['通關時間'] || item['時間'] || '00:00',
+            moves: parseInt(item.moves || item['步數'] || item['移動步數'] || '0'),
+            cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
+            timestamp: item.timestamp || item['提交時間'] || item['時間戳記'] || ''
+        }))
+
+        return mappedRecords
     } catch (error) {
         console.error('取得排行榜失敗:', error)
         return []

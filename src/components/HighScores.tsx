@@ -22,7 +22,15 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
             console.log(`[排行榜查詢] 正在取得關卡: "${currentLevelKey}"`)
             setIsLoading(true)
-            const remoteScores = await getLeaderboard(currentLevelKey)
+            let remoteScores = await getLeaderboard(currentLevelKey)
+
+            // 如果精準匹配無結果，嘗試移除空格後再次查詢
+            if (remoteScores.length === 0 && currentLevelKey.includes(' ')) {
+                const fallbackKey = currentLevelKey.replace(/\s/g, '')
+                console.log(`[排行榜查詢] 精準匹配無結果，嘗試移除空格後再次查詢: "${fallbackKey}"`)
+                remoteScores = await getLeaderboard(fallbackKey)
+            }
+
             console.log(`[排行榜結果] 取得數據數量: ${remoteScores.length}`, remoteScores)
 
             // 排序：時間優先（從小到大）
