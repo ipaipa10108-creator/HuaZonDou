@@ -13,7 +13,7 @@ interface GameBoardProps {
     onBackToSetup: () => void
 }
 
-export default function GameBoard({ settings, player, onComplete, onBackToSetup }: GameBoardProps) {
+export default function GameBoard({ settings, onComplete, onBackToSetup }: GameBoardProps) {
     const {
         gameState,
         startGame,
