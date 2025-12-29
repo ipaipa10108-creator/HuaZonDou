@@ -73,3 +73,11 @@ export interface MoveResult {
 
 // 顏色主題
 export type ColorTheme = 'default' | 'blue' | 'red' | 'orange';
+
+// 網路關卡
+export interface RemoteLevel {
+    id: string;
+    name: string;
+    image: string;
+    size: number;
+}

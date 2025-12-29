@@ -50,3 +50,27 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         return []
     }
 }
+/**
+ * 取得網路關卡列表
+ */
+export async function getLevels(): Promise<RemoteLevel[]> {
+    if (!GOOGLE_SCRIPT_URL) {
+        return []
+    }
+
+    try {
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=levels`)
+        const data = await response.json()
+        return data.levels || []
+    } catch (error) {
+        console.error('取得網路關卡失敗:', error)
+        return []
+    }
+}
+
+export interface RemoteLevel {
+    id: string;
+    name: string;
+    image: string;
+    size: number;
+}

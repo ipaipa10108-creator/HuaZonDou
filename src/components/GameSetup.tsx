@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react'
-import { GameSettings, GameMode, Player, PresetImage } from '../types'
+import { GameSettings, GameMode, Player, PresetImage, RemoteLevel } from '../types'
 import { sanitizeFilenameForKey, preprocessImage } from '../utils/imageUtils'
+import { getLevels } from '../services/googleSheetsApi'
 import './GameSetup.css'
 
 interface GameSetupProps {
@@ -35,9 +36,26 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
     const [selectedImage, setSelectedImage] = useState<PresetImage | null>(null)
     const [customImageSrc, setCustomImageSrc] = useState<string | null>(null)
     const [customImageName, setCustomImageName] = useState('')
-    const [isProcessing, setIsProcessing] = useState(false)
+    const [remoteLevels, setRemoteLevels] = useState<RemoteLevel[]>([])
+    const [isLoadingLevels, setIsLoadingLevels] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const basePath = import.meta.env.BASE_URL || '/'
+
+    // 載入網路關卡
+    useEffect(() => {
+        const loadRemoteLevels = async () => {
+            setIsLoadingLevels(true)
+            try {
+                const levels = await getLevels()
+                setRemoteLevels(levels)
+            } catch (error) {
+                console.error('載入網路關卡失敗:', error)
+            } finally {
+                setIsLoadingLevels(false)
+            }
+        }
+        loadRemoteLevels()
+    }, [])
 
     // 當選擇圖片模式時，自動選中第一張圖片
     useEffect(() => {
@@ -92,7 +110,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
             } else if (selectedImage) {
                 try {
                     setIsProcessing(true)
-                    imageSource = await preprocessImage(`${basePath}${selectedImage.src} `, size)
+                    imageSource = await preprocessImage(`${basePath}${selectedImage.src}`, size)
                     imageIdentifier = selectedImage.name
                     imageDisplayName = selectedImage.name
                 } catch {
@@ -153,10 +171,29 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                     <section className="setup-section">
                         <h2>選擇圖片</h2>
                         <div className="image-grid">
+                            {/* 顯示網路關卡 */}
+                            {remoteLevels.map((level) => (
+                                <div
+                                    key={`remote-${level.id}`}
+                                    className={`image-option remote-option ${selectedImage?.src === level.image && !customImageSrc ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        setSelectedImage({ name: level.name, src: level.image })
+                                        setCustomImageSrc(null)
+                                        setCustomImageName('')
+                                        // 如果網路關卡有指定尺寸，則自動切換
+                                        if (level.size) setSize(level.size)
+                                    }}
+                                >
+                                    <div className="remote-badge">網路</div>
+                                    <img src={level.image} alt={level.name} />
+                                    <span className="image-name">{level.name}</span>
+                                </div>
+                            ))}
+                            {/* 顯示預設圖片 */}
                             {PRESET_IMAGES.map((image) => (
                                 <div
                                     key={image.name}
-                                    className={`image-option ${selectedImage?.name === image.name && !customImageSrc ? 'selected' : ''}`}
+                                    className={`image-option ${selectedImage?.name === image.name && selectedImage?.src === `${basePath}${image.src}` && !customImageSrc ? 'selected' : ''}`}
                                     onClick={() => handleImageSelect(image)}
                                 >
                                     <img src={`${basePath}${image.src}`} alt={image.name} />
@@ -164,6 +201,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                                 </div>
                             ))}
                         </div>
+                        {isLoadingLevels && <div className="loading-text">載入網路關卡中...</div>}
                         <div className="custom-upload">
                             <input
                                 ref={fileInputRef}
@@ -220,9 +258,9 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                 <button
                     className="start-btn"
                     onClick={handleStartGame}
-                    disabled={isProcessing || (mode === 'image' && !selectedImage && !customImageSrc)}
+                    disabled={isProcessing || isLoadingLevels || (mode === 'image' && !selectedImage && !customImageSrc)}
                 >
-                    {isProcessing ? '準備中...' : '🎮 開始遊戲'}
+                    {isProcessing ? '準備中...' : (isLoadingLevels ? '載入中...' : '🎮 開始遊戲')}
                 </button>
             </div>
         </div>
