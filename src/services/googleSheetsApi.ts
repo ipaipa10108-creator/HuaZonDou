@@ -14,14 +14,12 @@ export async function submitScore(result: GameResult): Promise<{ success: boolea
     try {
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Google Apps Script 需要 no-cors 模式
+            mode: 'no-cors',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(result),
         })
-
-        // no-cors 模式下無法讀取 response，假設成功
         console.log('成績提交請求已發送', result)
         return { success: true }
     } catch (error) {
@@ -34,7 +32,7 @@ export async function submitScore(result: GameResult): Promise<{ success: boolea
 }
 
 /**
- * 取得排行榜（如果 Google Apps Script 支援）
+ * 取得排行榜
  */
 export async function getLeaderboard(level: string): Promise<GameResult[]> {
     if (!GOOGLE_SCRIPT_URL) {
@@ -43,99 +41,74 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
 
     try {
         const url = `${GOOGLE_SCRIPT_URL}?action=leaderboard&level=${encodeURIComponent(level)}`
-        console.log(`[API 請求] GET 排行榜: ${url}`)
         const response = await fetch(url)
         const data = await response.json()
-        console.log(`[API 回應] 原始數據:`, data)
-
         const rawRecords = data.records || data.data || []
 
-        // 欄位對照映射表 (處理 Sheets 的中文欄位名)
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
-            // 處理 Google Sheets 可能將 MM:SS 誤判為日期的情況
-            const timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
+            let timeRaw = item.time || item['通關時間'] || item['時間'] || '00:00';
             let formattedTime = '00:00';
 
-            if (typeof timeRaw === 'string' && timeRaw.includes('T') && timeRaw.includes('1899')) {
+            // 處理 Google Sheets 傳回的日期字串
+            if (typeof timeRaw === 'string' && timeRaw.includes('T')) {
                 try {
                     const date = new Date(timeRaw);
-                    // Google Sheets 的基礎日期是 1899-12-30
-                    // 我們計算該 Date 物件在當天的總秒數
-                    const totalSeconds = (date.getUTCHours() * 3600) + (date.getUTCMinutes() * 60) + date.getUTCSeconds();
-
-                    // 考慮到 Sheets 的 1:31 可能被儲存為 01:31:00 (H:M:S) 或 00:01:31
-                    // 這裡取商數為分，餘數為秒
-                    const mins = Math.floor(totalSeconds / 60);
-                    const secs = totalSeconds % 60;
-                    formattedTime = `${mins}分${secs}秒`;
+                    // 根據使用者截圖，1:31 在 Sheets 被視為 01:31:00 (HH:MM:SS)
+                    // 所以獲取分鐘和秒數即可
+                    const m = date.getUTCMinutes();
+                    const s = date.getUTCSeconds();
+                    formattedTime = `${m}分${s}秒`;
                 } catch (e) {
                     formattedTime = String(timeRaw);
                 }
             } else if (typeof timeRaw === 'string' && timeRaw.includes(':')) {
-                // 處理原始 MM:SS 格式
                 const parts = timeRaw.split(':');
                 if (parts.length === 2) {
                     formattedTime = `${parseInt(parts[0])}分${parseInt(parts[1])}秒`;
                 } else if (parts.length === 3) {
-                    // HH:MM:SS
-                    const h = parseInt(parts[0]);
-                    const m = parseInt(parts[1]);
-                    const s = parseInt(parts[2]);
-                    if (h > 0) {
-                        formattedTime = `${h * 60 + m}分${s}秒`;
-                    } else {
-                        formattedTime = `${m}分${s}秒`;
-                    }
+                    // HH:MM:SS 情況下，中間的是分，最後的是秒
+                    formattedTime = `${parseInt(parts[1])}分${parseInt(parts[2])}秒`;
                 }
             } else {
                 formattedTime = String(timeRaw);
             }
 
-            // 處理日期格式 (提交時間)
-            const timestamp = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
+            // 處理日期格式
+            const tsRaw = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
             let dateStr = '';
-            if (timestamp) {
+            if (tsRaw) {
                 try {
-                    const d = new Date(timestamp);
+                    const d = new Date(tsRaw);
                     if (!isNaN(d.getTime())) {
                         dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
                     }
-                } catch (e) {
-                    // 解析失敗則不顯示日期
-                }
+                } catch (e) { }
             }
 
             return {
                 playerId: String(item.playerId || item['ID'] || item['帳號'] || '神秘玩家'),
                 level: String(item.level || item['關卡'] || item['關卡名稱'] || level),
-                time: formattedTime, // 儲存格式化後的字串，例如 "1分31秒"
+                time: formattedTime,
                 moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
                 cheatCount: parseInt(String(item.cheatCount || item['作弊次數'] || item['作弊'] || '0')),
-                timestamp: dateStr // 儲存 YYYY/MM/DD
+                timestamp: dateStr
             };
         });
 
-        return mappedRecords
+        return mappedRecords;
     } catch (error) {
-        console.error('取得排行榜失敗:', error)
-        return []
+        console.error('取得排行榜失敗:', error);
+        return [];
     }
 }
 
-/**
- * 取得網路關卡列表
- */
 export async function getLevels(): Promise<RemoteLevel[]> {
-    if (!GOOGLE_SCRIPT_URL) {
-        return []
-    }
-
+    if (!GOOGLE_SCRIPT_URL) return [];
     try {
         const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=levels`)
         const data = await response.json()
         return data.levels || []
     } catch (error) {
-        console.error('取得網路關卡失敗:', error)
         return []
     }
 }
