@@ -42,8 +42,11 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
     }
 
     try {
-        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=leaderboard&level=${encodeURIComponent(level)}`)
+        const url = `${GOOGLE_SCRIPT_URL}?action=leaderboard&level=${encodeURIComponent(level)}`
+        console.log(`[API 請求] GET 排行榜: ${url}`)
+        const response = await fetch(url)
         const data = await response.json()
+        console.log(`[API 回應] 原始數據:`, data)
         return data.records || []
     } catch (error) {
         console.error('取得排行榜失敗:', error)
