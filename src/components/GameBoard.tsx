@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+```typescript
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { GameSettings, GameState, Position, ColorTheme } from '../types'
 import { useGame } from '../hooks/useGame'
 import { useSoundManager } from '../hooks/useSoundManager'
@@ -147,7 +148,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60)
         const secs = seconds % 60
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        return `${ mins.toString().padStart(2, '0') }:${ secs.toString().padStart(2, '0') } `
     }
 
     if (!isReady || (settings.mode === 'image' && isProcessing)) {
@@ -187,7 +188,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
                     className="puzzle-container"
                     ref={puzzleContainerRef}
                     style={{
-                        gridTemplateColumns: `repeat(${settings.size}, 1fr)`,
+                        gridTemplateColumns: `repeat(${ settings.size }, 1fr)`,
                         position: 'relative'
                     }}
                 >
@@ -200,8 +201,8 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
 
                         return (
                             <div
-                                key={`${row}-${col}`}
-                                className={`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''}`}
+                                key={`${ row } -${ col } `}
+                                className={`puzzle - block ${ isEmpty ? `empty color-${colorTheme}` : '' } ${ settings.mode === 'image' ? 'image-block' : '' } ${ isHint ? 'hint' : '' } ${ isCheatSelected ? 'cheat-selected' : '' } `}
                                 onClick={() => handleBlockClick(row, col)}
                                 data-row={row}
                                 data-col={col}
@@ -212,7 +213,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
                                         <span>{value}</span>
                                     ) : (
                                         imagePieces[value - 1] && imagePieces[value - 1] !== 'error_piece' && (
-                                            <img src={imagePieces[value - 1]} alt={`Piece ${value}`} draggable={false} />
+                                            <img src={imagePieces[value - 1]} alt={`Piece ${ value } `} draggable={false} />
                                         )
                                     )
                                 )}
@@ -224,7 +225,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
                     {showOriginal && settings.imageSource && (
                         <div
                             className="original-overlay"
-                            style={{ backgroundImage: `url(${settings.imageSource})` }}
+                            style={{ backgroundImage: `url(${ settings.imageSource })` }}
                         />
                     )}
                 </div>
@@ -246,7 +247,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup }: GameB
                     </button>
                     <button
                         onClick={handleToggleCheat}
-                        className={`cheat-btn ${gameState.cheatEnabled ? 'active' : ''}`}
+                        className={`cheat - btn ${ gameState.cheatEnabled ? 'active' : '' } `}
                     >
                         🃏 作弊
                     </button>

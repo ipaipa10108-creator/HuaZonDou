@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { GameSettings, Player, HighScore, GameResult } from '../types'
 import { storage } from '../utils/storage'
 import { submitScore } from '../services/googleSheetsApi'
