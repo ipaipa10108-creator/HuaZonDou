@@ -90,37 +90,36 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
             } else {
                 formattedTime = timeRaw;
             }
-        }
 
             // 處理日期格式 (提交時間)
             let timestamp = item.timestamp || item['提交時間'] || item['時間戳記'] || '';
-        let dateStr = '';
-        if (timestamp) {
-            try {
-                const d = new Date(timestamp);
-                if (!isNaN(d.getTime())) {
-                    dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+            let dateStr = '';
+            if (timestamp) {
+                try {
+                    const d = new Date(timestamp);
+                    if (!isNaN(d.getTime())) {
+                        dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+                    }
+                } catch (e) {
+                    // 解析失敗則不顯示日期
                 }
-            } catch (e) {
-                // 解析失敗則不顯示日期
             }
-        }
 
-        return {
-            playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
-            level: item.level || item['關卡'] || item['關卡名稱'] || level,
-            time: formattedTime, // 儲存格式化後的字串，例如 "1分31秒"
-            moves: parseInt(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0'),
-            cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
-            timestamp: dateStr // 儲存 YYYY/MM/DD
-        };
-    });
+            return {
+                playerId: item.playerId || item['ID'] || item['帳號'] || '神秘玩家',
+                level: item.level || item['關卡'] || item['關卡名稱'] || level,
+                time: formattedTime, // 儲存格式化後的字串，例如 "1分31秒"
+                moves: parseInt(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0'),
+                cheatCount: parseInt(item.cheatCount || item['作弊次數'] || item['作弊'] || '0'),
+                timestamp: dateStr // 儲存 YYYY/MM/DD
+            };
+        });
 
-    return mappedRecords
-} catch (error) {
-    console.error('取得排行榜失敗:', error)
-    return []
-}
+        return mappedRecords
+    } catch (error) {
+        console.error('取得排行榜失敗:', error)
+        return []
+    }
 }
 /**
  * 取得網路關卡列表
