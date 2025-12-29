@@ -35,7 +35,11 @@ jobs:
           echo "VITE_BASE_URL=/HuaZonDou/" >> .env
 
       - name: Build
-        run: npm run build
+        run: |
+          npm run build -- --debug
+        env:
+          VITE_GOOGLE_APP_SCRIPT_URL: ${{ secrets.VITE_GOOGLE_APP_SCRIPT_URL }}
+          VITE_BASE_URL: /HuaZonDou/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
