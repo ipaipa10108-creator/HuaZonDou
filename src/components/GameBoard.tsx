@@ -262,6 +262,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
                 <HighScores
                     mode={settings.mode}
                     imageIdentifier={settings.imageIdentifier || ''}
+                    imageDisplayName={settings.imageDisplayName}
                     size={settings.size}
                 />
             </div>

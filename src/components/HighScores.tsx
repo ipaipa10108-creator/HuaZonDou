@@ -6,17 +6,18 @@ import './HighScores.css'
 interface HighScoresProps {
     mode: GameMode
     imageIdentifier: string
+    imageDisplayName?: string
     size: number
 }
 
-export default function HighScores({ mode, imageIdentifier, size }: HighScoresProps) {
+export default function HighScores({ mode, imageIdentifier, imageDisplayName, size }: HighScoresProps) {
     const [scores, setScores] = useState<GameResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showMore, setShowMore] = useState(false)
 
     // 產生與提交時一致的關卡識別名稱
-    const levelDisplayName = settings.imageDisplayName || (settings.mode === 'number' ? '數字模式' : '圖片模式')
-    const levelKey = `${levelDisplayName} (${settings.size}x${settings.size})`
+    const levelName = imageDisplayName || (mode === 'number' ? '數字模式' : '圖片模式')
+    const levelKey = `${levelName} (${size}x${size})`
 
     useEffect(() => {
         const loadScores = async () => {
