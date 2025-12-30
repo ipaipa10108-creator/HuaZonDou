@@ -71,12 +71,34 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
 
                     setLeaderboardScores(scores)
 
+                    // 輔助函數：將時間字串轉換為秒數 (支援 "MM:SS" 與 "X分Y秒")
+                    const getTimeInSeconds = (timeStr: string) => {
+                        // 嘗試解析 "X分Y秒"
+                        const minuteMatch = timeStr.match(/(\d+)分/);
+                        const secondMatch = timeStr.match(/(\d+)秒/);
+                        if (minuteMatch || secondMatch) {
+                            let totalSeconds = 0;
+                            if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60;
+                            if (secondMatch) totalSeconds += parseInt(secondMatch[1]);
+                            return totalSeconds;
+                        }
+
+                        // 嘗試解析 "MM:SS"
+                        const parts = timeStr.split(':');
+                        if (parts.length === 2) {
+                            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                        }
+
+                        return 0;
+                    };
+
                     // 計算玩家排名
-                    // 比對條件：ID、時間、步數、作弊次數
-                    // 注意：timestamp 不參與比對，因為 server 回傳格式不同
+                    // 比對條件：ID、時間(轉秒數)、步數、作弊次數
+                    const currentSeconds = getTimeInSeconds(gameResult.time);
+
                     const rankIndex = scores.findIndex(s =>
                         s.playerId === gameResult.playerId &&
-                        s.time === gameResult.time &&
+                        Math.abs(getTimeInSeconds(s.time) - currentSeconds) < 1 && // 容許 1 秒內誤差，或是完全相等
                         s.moves === gameResult.moves &&
                         s.cheatCount === gameResult.cheatCount
                     )
