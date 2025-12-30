@@ -10,7 +10,10 @@ interface GameCompleteProps {
     result: {
         time: string
         moves: number
+        time: string
+        moves: number
         cheatCount: number
+        specialModes?: string
     }
     player: Player
     onPlayAgain: () => void
@@ -34,7 +37,11 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
             time: result.time,
             moves: result.moves,
             cheatUsed: result.cheatCount > 0,
-            cheatCount: result.cheatCount
+            time: result.time,
+            moves: result.moves,
+            cheatUsed: (result.cheatCount > 0) || !!result.specialModes,
+            cheatCount: result.cheatCount,
+            specialModes: result.specialModes // 新增
         }
 
         const record = storage.saveHighScore(key, newScore)
@@ -49,7 +56,10 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                 time: result.time,
                 moves: result.moves,
                 cheatCount: result.cheatCount,
-                timestamp: new Date().toISOString()
+                moves: result.moves,
+                cheatCount: result.cheatCount,
+                timestamp: new Date().toISOString(),
+                specialModes: result.specialModes // 新增
             }
 
             const res = await submitScore(gameResult)
@@ -140,60 +150,61 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                         <span className="value">{result.moves}</span>
                     </div>
                     <div className="final-stat">
-                        <span className="label">作弊次數</span>
-                        <span className="value">{result.cheatCount}</span>
+                        <div className="final-stat">
+                            <span className="label">特殊模式</span>
+                            <span className="value">{result.specialModes || '無'}</span>
+                        </div>
                     </div>
-                </div>
 
-                {isNewRecord && (
-                    <div className="new-record-badge">新紀錄！👑</div>
-                )}
-
-                <div className="submission-status">
-                    {isSubmitting ? (
-                        <span className="submitting">正在上傳成績到 Google Sheets...</span>
-                    ) : submitStatus === 'success' ? (
-                        <>
-                            <span className="success">✅ 成績已成功上傳！</span>
-                            {playerRank && playerRank <= 10 && (
-                                <div className="rank-notification">
-                                    太神了！您目前的排名是第 <span className="rank-highlight">{playerRank}</span> 名！
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <span className="error">❌ 成績上傳失敗，請檢查網路連線。</span>
+                    {isNewRecord && (
+                        <div className="new-record-badge">新紀錄！👑</div>
                     )}
-                </div>
 
-                {showLeaderboard && (
-                    <div className="complete-leaderboard">
-                        <HighScores
-                            mode={settings.mode}
-                            imageIdentifier={settings.imageIdentifier || ''}
-                            imageDisplayName={settings.imageDisplayName}
-                            size={settings.size}
-                            preloadedScores={leaderboardScores}
-                            highlightResult={{
-                                ...result,
-                                type: 'GameResult',
-                                playerId: player.id,
-                                level: leaderboardScores[0]?.level || '',
-                                timestamp: '', // 不重要，HighScores 使用 playerId+score 比對
-                            } as any}
-                        />
+                    <div className="submission-status">
+                        {isSubmitting ? (
+                            <span className="submitting">正在上傳成績到 Google Sheets...</span>
+                        ) : submitStatus === 'success' ? (
+                            <>
+                                <span className="success">✅ 成績已成功上傳！</span>
+                                {playerRank && playerRank <= 10 && (
+                                    <div className="rank-notification">
+                                        太神了！您目前的排名是第 <span className="rank-highlight">{playerRank}</span> 名！
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <span className="error">❌ 成績上傳失敗，請檢查網路連線。</span>
+                        )}
                     </div>
-                )}
 
-                <div className="complete-buttons">
-                    <button className="play-again-btn" onClick={onPlayAgain}>
-                        再玩一次
-                    </button>
-                    <button className="back-menu-btn" onClick={onBackToSetup}>
-                        返回主選單
-                    </button>
+                    {showLeaderboard && (
+                        <div className="complete-leaderboard">
+                            <HighScores
+                                mode={settings.mode}
+                                imageIdentifier={settings.imageIdentifier || ''}
+                                imageDisplayName={settings.imageDisplayName}
+                                size={settings.size}
+                                preloadedScores={leaderboardScores}
+                                highlightResult={{
+                                    ...result,
+                                    type: 'GameResult',
+                                    playerId: player.id,
+                                    level: leaderboardScores[0]?.level || '',
+                                    timestamp: '', // 不重要，HighScores 使用 playerId+score 比對
+                                } as any}
+                            />
+                        </div>
+                    )}
+
+                    <div className="complete-buttons">
+                        <button className="play-again-btn" onClick={onPlayAgain}>
+                            再玩一次
+                        </button>
+                        <button className="back-menu-btn" onClick={onBackToSetup}>
+                            返回主選單
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    )
+            )
 }

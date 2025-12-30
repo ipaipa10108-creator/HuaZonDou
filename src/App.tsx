@@ -16,7 +16,10 @@ function App() {
     const [gameResult, setGameResult] = useState<{
         time: string
         moves: number
+        time: string
+        moves: number
         cheatCount: number
+        specialModes?: string
     } | null>(null)
     const soundManager = useSoundManager()
 
@@ -57,7 +60,13 @@ function App() {
         setGameResult({
             time: formatTime(gameState.elapsedSeconds),
             moves: gameState.moves,
-            cheatCount: gameState.cheatCount
+            moves: gameState.moves,
+            cheatCount: gameState.cheatCount,
+            specialModes: [
+                gameState.hasUsedCheatMode ? '🃏' : '', // 金手指
+                gameState.hasUsedSwapMode ? '🔮' : '',  // 轉珠
+                gameState.hasUsedBlindMode ? '😎' : ''  // 盲解
+            ].join('') // 串接，如 "🃏🔮"
         })
         setCurrentView('complete')
     }

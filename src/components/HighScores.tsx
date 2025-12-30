@@ -78,7 +78,7 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
                             <th>玩家</th>
                             <th>通關時間</th>
                             <th>步數</th>
-                            <th>作弊</th>
+                            <th>特殊</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -106,7 +106,9 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
                                     </td>
                                     <td>{score.moves}</td>
                                     <td>
-                                        {score.cheatCount > 0 ? (
+                                        {score.specialModes ? (
+                                            <span className="special-modes">{score.specialModes}</span>
+                                        ) : score.cheatCount > 0 ? (
                                             <span className="cheat-badge used">{score.cheatCount}次</span>
                                         ) : (
                                             <span className="cheat-badge none">無</span>

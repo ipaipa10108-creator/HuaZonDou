@@ -38,6 +38,9 @@ export interface GameState {
     status: GameStatus;
     isBlindMode: boolean;
     isSwapMode: boolean;
+    hasUsedBlindMode: boolean;
+    hasUsedSwapMode: boolean;
+    hasUsedCheatMode: boolean;
 }
 
 // 高分記錄
@@ -47,7 +50,9 @@ export interface HighScore {
     time: string;
     moves: number;
     cheatUsed: boolean;
+    cheatUsed: boolean;
     cheatCount: number;
+    specialModes?: string;
 }
 
 // 遊戲結果（提交到 Google Sheets）
@@ -56,8 +61,10 @@ export interface GameResult {
     level: string;
     time: string;
     moves: number;
-    cheatCount: number;
+    moves: number;
+    cheatCount: number; // 保留此欄位作為相容，但主要顯示 specialModes
     timestamp: string;
+    specialModes?: string; // 新增：特殊模式紀錄 (emoji)
 }
 
 // 玩家資訊

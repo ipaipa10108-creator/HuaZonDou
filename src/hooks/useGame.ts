@@ -19,6 +19,9 @@ export function useGame(settings: GameSettings) {
             status: 'idle',
             isBlindMode: false,
             isSwapMode: false,
+            hasUsedBlindMode: false,
+            hasUsedSwapMode: false,
+            hasUsedCheatMode: false,
         }
     })
 
@@ -121,7 +124,10 @@ export function useGame(settings: GameSettings) {
             ...prev,
             board: newBoard,
             moves: prev.moves + 1,
+            board: newBoard,
+            moves: prev.moves + 1,
             cheatCount: prev.cheatCount + 1,
+            hasUsedCheatMode: true,
         }))
 
         return true
@@ -169,6 +175,9 @@ export function useGame(settings: GameSettings) {
             status: 'playing',
             isBlindMode: false,
             isSwapMode: false,
+            hasUsedBlindMode: false,
+            hasUsedSwapMode: false,
+            hasUsedCheatMode: false,
         })
     }, [settings.size])
 
@@ -203,6 +212,7 @@ export function useGame(settings: GameSettings) {
                 return {
                     ...prev,
                     isBlindMode: true,
+                    hasUsedBlindMode: true,
                     accumulatedTime: newAccumulated,
                     elapsedSeconds: newAccumulated, // 顯示時間立即更新
                     startTime: null // 停止計時
@@ -226,7 +236,8 @@ export function useGame(settings: GameSettings) {
 
         setGameState((prev: GameState) => ({
             ...prev,
-            isSwapMode: !prev.isSwapMode
+            isSwapMode: !prev.isSwapMode,
+            hasUsedSwapMode: prev.hasUsedSwapMode || !prev.isSwapMode // 如果是啟用，則標記為已使用
         }))
     }, [gameState.status])
 

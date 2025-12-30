@@ -132,7 +132,20 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
             stopGame()
             onComplete(gameState)
         }
-    }, [gameState, onComplete, playWinSound, stopGame])
+    }, [gameState.status, onComplete, playWinSound, stopGame])
+    // 注意：gameState 作為依賴項，當它變為 complete 時觸發。
+    // onComplete 應該會處理這個 gameState，我們不需要在這裡修改它，
+    // 因為 GameState 已經包含了 hasUsed... 標誌。
+    // 但是 HighScores 需要的是 GameResult 結構，這通常在父組件(GameComplete?)處理，
+    // 或者我們確保 gameState 包含足夠資訊。
+    // `gameState` has `hasUsed...` flags.
+    // Parent `App` or `GameComplete` will construct `GameResult`.
+
+    // Self-correction: GameBoard calls onComplete(gameState).
+    // Let's check where onComplete goes. (Usually to App.tsx or GameSetup.tsx swapping views)
+    // Actually, looking at file list, there is GameComplete.tsx.
+    // I should check GameComplete.tsx too.
+
 
     // 處理方塊點擊
     const handleBlockClick = useCallback((row: number, col: number) => {
