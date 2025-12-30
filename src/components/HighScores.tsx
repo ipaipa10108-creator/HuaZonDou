@@ -8,14 +8,21 @@ interface HighScoresProps {
     imageIdentifier: string
     imageDisplayName?: string
     size: number
+    preloadedScores?: GameResult[]
+    highlightResult?: GameResult
 }
 
-export default function HighScores({ mode, imageIdentifier, imageDisplayName, size }: HighScoresProps) {
+export default function HighScores({ mode, imageIdentifier, imageDisplayName, size, preloadedScores, highlightResult }: HighScoresProps) {
     const [scores, setScores] = useState<GameResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showMore, setShowMore] = useState(false)
 
     useEffect(() => {
+        if (preloadedScores) {
+            setScores(preloadedScores)
+            return
+        }
+
         const loadScores = async () => {
             const currentLevelName = imageDisplayName || (mode === 'number' ? '數字模式' : '圖片模式')
             const currentLevelKey = `${currentLevelName} (${size}x${size})`
@@ -33,49 +40,14 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
 
             console.log(`[排行榜結果] 取得數據數量: ${remoteScores.length}`, remoteScores)
 
-            // 排序準則：
-            // 1. 作弊次數：少者優先 (0 次 > 1 次)
-            // 2. 通關時間：短者優先
-            // 3. 移動步數：少者優先
-            const sorted = [...remoteScores].sort((a, b) => {
-                // 1. 作弊次數
-                if (a.cheatCount !== b.cheatCount) {
-                    return a.cheatCount - b.cheatCount;
-                }
-
-                // 2. 通關時間
-                const getTimeInSeconds = (timeStr: string) => {
-                    // 從字串中提取 "X分Y秒" 的部分
-                    const minuteMatch = timeStr.match(/(\d+)分/);
-                    const secondMatch = timeStr.match(/(\d+)秒/);
-                    let totalSeconds = 0;
-                    if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60;
-                    if (secondMatch) totalSeconds += parseInt(secondMatch[1]);
-
-                    if (totalSeconds > 0) return totalSeconds;
-
-                    // 備用解析：處理沒被轉換過的 MM:SS
-                    const parts = timeStr.replace(/\s*\(.*\)/, '').split(':')
-                    if (parts.length === 2) {
-                        return (parseInt(parts[0]) * 60) + parseInt(parts[1])
-                    }
-                    return 99999
-                }
-                const timeA = getTimeInSeconds(a.time)
-                const timeB = getTimeInSeconds(b.time)
-                if (timeA !== timeB) {
-                    return timeA - timeB;
-                }
-
-                // 3. 移動步數
-                return a.moves - b.moves;
-            })
-            setScores(sorted)
+            // 排序邏輯已移至 API 層 (googleSheetsApi.ts)
+            // 這裡直接使用回傳的已排序數據
+            setScores(remoteScores)
             setIsLoading(false)
         }
         loadScores()
         setShowMore(false) // 切換關卡時重置展開狀態
-    }, [mode, imageIdentifier, size, imageDisplayName])
+    }, [mode, imageIdentifier, size, imageDisplayName, preloadedScores])
 
     const displayedScores = showMore ? scores.slice(0, 100) : scores.slice(0, 10)
 
@@ -110,25 +82,39 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
                         </tr>
                     </thead>
                     <tbody>
-                        {displayedScores.map((score, index) => (
-                            <tr key={`${score.playerId}-${index}`} className={`rank-${index + 1}`}>
-                                <td>
-                                    <span className="rank-badge">#{index + 1}</span>
-                                </td>
-                                <td className="player-cell">{score.playerId}</td>
-                                <td className="time-cell">
-                                    {score.time} {score.timestamp && <span className="date-hint">({score.timestamp})</span>}
-                                </td>
-                                <td>{score.moves}</td>
-                                <td>
-                                    {score.cheatCount > 0 ? (
-                                        <span className="cheat-badge used">{score.cheatCount}次</span>
-                                    ) : (
-                                        <span className="cheat-badge none">無</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                        {displayedScores.map((score, index) => {
+                            // 判斷是否為需要高亮的行
+                            // 這裡使用較為寬鬆的匹配，因為 timestamp 格式可能不同 (ISO vs YYYY/MM/DD)
+                            // 主要比對：玩家ID + 分數(時間/步數/作弊)
+                            const isHighlight = highlightResult &&
+                                score.playerId === highlightResult.playerId &&
+                                score.moves === highlightResult.moves &&
+                                score.cheatCount === highlightResult.cheatCount &&
+                                (score.time === highlightResult.time || score.time.startsWith(highlightResult.time.split(' ')[0])); // 兼容時間格式
+
+                            return (
+                                <tr key={`${score.playerId}-${index}`} className={`rank-${index + 1} ${isHighlight ? 'highlight-row' : ''}`}>
+                                    <td>
+                                        <span className="rank-badge">#{index + 1}</span>
+                                    </td>
+                                    <td className="player-cell">
+                                        {score.playerId}
+                                        {isHighlight && <span className="me-badge"> (我)</span>}
+                                    </td>
+                                    <td className="time-cell">
+                                        {score.time} {score.timestamp && <span className="date-hint">({score.timestamp})</span>}
+                                    </td>
+                                    <td>{score.moves}</td>
+                                    <td>
+                                        {score.cheatCount > 0 ? (
+                                            <span className="cheat-badge used">{score.cheatCount}次</span>
+                                        ) : (
+                                            <span className="cheat-badge none">無</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            )
+                        })}
                     </tbody>
                 </table>
             </div>

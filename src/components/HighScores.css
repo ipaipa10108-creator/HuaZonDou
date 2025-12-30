@@ -1,3 +1,22 @@
+.date-hint {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 4px;
+    font-weight: normal;
+}
+
+.highlight-row {
+    background: rgba(184, 134, 11, 0.3) !important;
+    border: 1px solid rgba(184, 134, 11, 0.5);
+}
+
+.me-badge {
+    font-size: 0.7rem;
+    color: #ffd700;
+    margin-left: 4px;
+    font-style: italic;
+}
+
 .high-scores-container {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 16px;

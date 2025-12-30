@@ -88,10 +88,11 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
             }
 
             // 3. 按照需求合併顯示： "1分31秒 (2025/12/30)"
-            const finalDisplayTime = dateStr ? `${formattedTime} (${dateStr})` : formattedTime;
+            // 修改：不再合併，讓 UI 自行決定如何顯示，這裡只回傳純淨的時間字串
+            const finalDisplayTime = formattedTime;
 
             return {
-                playerId: String(item.playerId || item['ID'] || item['帳號'] || '神秘玩家'),
+                playerId: String(item.playerId || item['ID'] || item['帳號'] || item['玩家'] || '神秘玩家'),
                 level: String(item.level || item['關卡'] || item['關卡名稱'] || level),
                 time: finalDisplayTime,
                 moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
@@ -100,7 +101,44 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
             };
         });
 
-        return mappedRecords;
+        // 排序逻辑移至 API 层：
+        // 1. 作弊次數：少者優先
+        // 2. 通關時間：短者優先
+        // 3. 移動步數：少者優先
+        const sortedRecords = mappedRecords.sort((a, b) => {
+            // 1. 作弊次數
+            if (a.cheatCount !== b.cheatCount) {
+                return a.cheatCount - b.cheatCount;
+            }
+
+            // 2. 通關時間
+            const getTimeInSeconds = (timeStr: string) => {
+                const minuteMatch = timeStr.match(/(\d+)分/);
+                const secondMatch = timeStr.match(/(\d+)秒/);
+                let totalSeconds = 0;
+                if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60;
+                if (secondMatch) totalSeconds += parseInt(secondMatch[1]);
+                if (totalSeconds > 0) return totalSeconds;
+
+                // 備用解析
+                const parts = timeStr.replace(/\s*\(.*\)/, '').split(':')
+                if (parts.length === 2) {
+                    return (parseInt(parts[0]) * 60) + parseInt(parts[1])
+                }
+                return 99999
+            }
+
+            const timeA = getTimeInSeconds(a.time)
+            const timeB = getTimeInSeconds(b.time)
+            if (timeA !== timeB) {
+                return timeA - timeB;
+            }
+
+            // 3. 移動步數
+            return a.moves - b.moves;
+        });
+
+        return sortedRecords;
     } catch (error) {
         console.error('取得排行榜失敗:', error);
         return [];
