@@ -10,8 +10,6 @@ interface GameCompleteProps {
     result: {
         time: string
         moves: number
-        time: string
-        moves: number
         cheatCount: number
         specialModes?: string
     }
@@ -29,25 +27,22 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
     const [showLeaderboard, setShowLeaderboard] = useState(false)
 
     useEffect(() => {
-        // 儲存高分記錄
+        // 1. 儲存本地高分記錄
         const key = `${settings.mode}-${settings.imageIdentifier || ''}-${settings.size}`
         const newScore: HighScore = {
             levelName: settings.imageDisplayName || (settings.mode === 'number' ? '數字模式' : '圖片模式'),
             difficulty: `${settings.size}x${settings.size}`,
             time: result.time,
             moves: result.moves,
-            cheatUsed: result.cheatCount > 0,
-            time: result.time,
-            moves: result.moves,
             cheatUsed: (result.cheatCount > 0) || !!result.specialModes,
             cheatCount: result.cheatCount,
-            specialModes: result.specialModes // 新增
+            specialModes: result.specialModes
         }
 
         const record = storage.saveHighScore(key, newScore)
         setIsNewRecord(record)
 
-        // 自動提交到 Google Sheets
+        // 2. 自動提交到 Google Sheets
         const autoSubmit = async () => {
             setIsSubmitting(true)
             const gameResult: GameResult = {
@@ -56,71 +51,68 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                 time: result.time,
                 moves: result.moves,
                 cheatCount: result.cheatCount,
-                moves: result.moves,
-                cheatCount: result.cheatCount,
                 timestamp: new Date().toISOString(),
-                specialModes: result.specialModes // 新增
+                specialModes: result.specialModes
             }
 
             const res = await submitScore(gameResult)
+
             if (res.success) {
                 setSubmitStatus('success')
 
-                // 提交成功後，載入該關卡排行榜
+                // 3. 提交成功後，載入該關卡排行榜並計算排名
                 try {
-                    // 使用相同的關卡名稱邏輯
                     const levelKey = gameResult.level
-                    console.log(`[GameComplete] 正在取得排行榜: "${levelKey}"`)
+                    console.log(`[GameComplete] 取得排行榜: "${levelKey}"`)
 
                     let scores = await getLeaderboard(levelKey)
 
-                    // 如果精準匹配無結果，嘗試移除空格後再次查詢 (與 HighScores 邏輯一致)
+                    // Fallback: 嘗試移除空格
                     if (scores.length === 0 && levelKey.includes(' ')) {
                         scores = await getLeaderboard(levelKey.replace(/\s/g, ''))
                     }
 
                     setLeaderboardScores(scores)
 
-                    // 輔助函數：將時間字串轉換為秒數 (支援 "MM:SS" 與 "X分Y秒")
+                    // 4. 計算排名 (更加寬鬆的匹配邏輯)
                     const getTimeInSeconds = (timeStr: string) => {
-                        // 嘗試解析 "X分Y秒"
-                        const minuteMatch = timeStr.match(/(\d+)分/);
-                        const secondMatch = timeStr.match(/(\d+)秒/);
+                        const minuteMatch = timeStr.match(/(\d+)分/)
+                        const secondMatch = timeStr.match(/(\d+)秒/)
                         if (minuteMatch || secondMatch) {
-                            let totalSeconds = 0;
-                            if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60;
-                            if (secondMatch) totalSeconds += parseInt(secondMatch[1]);
-                            return totalSeconds;
+                            let totalSeconds = 0
+                            if (minuteMatch) totalSeconds += parseInt(minuteMatch[1]) * 60
+                            if (secondMatch) totalSeconds += parseInt(secondMatch[1])
+                            return totalSeconds
                         }
-
-                        // 嘗試解析 "MM:SS"
-                        const parts = timeStr.split(':');
+                        const parts = timeStr.split(':')
                         if (parts.length === 2) {
-                            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                            return parseInt(parts[0]) * 60 + parseInt(parts[1])
                         }
+                        return 0
+                    }
 
-                        return 0;
-                    };
+                    const currentSeconds = getTimeInSeconds(gameResult.time)
 
-                    // 計算玩家排名
-                    // 比對條件：ID、時間(轉秒數)、步數、作弊次數
-                    const currentSeconds = getTimeInSeconds(gameResult.time);
-
-                    const rankIndex = scores.findIndex(s =>
-                        s.playerId === gameResult.playerId &&
-                        Math.abs(getTimeInSeconds(s.time) - currentSeconds) < 1 && // 容許 1 秒內誤差，或是完全相等
-                        s.moves === gameResult.moves &&
-                        s.cheatCount === gameResult.cheatCount
-                    )
+                    // 尋找剛剛提交的成績
+                    // 策略：符合 ID 且時間/步數完全吻合 (忽略作弊次數/特殊模式，避免解析誤差)
+                    const rankIndex = scores.findIndex(s => {
+                        const isIdMatch = s.playerId === gameResult.playerId
+                        const isTimeMatch = Math.abs(getTimeInSeconds(s.time) - currentSeconds) < 2 // 容許 2 秒誤差
+                        const isMoveMatch = s.moves === gameResult.moves
+                        return isIdMatch && isTimeMatch && isMoveMatch
+                    })
 
                     if (rankIndex !== -1) {
                         const rank = rankIndex + 1
                         setPlayerRank(rank)
-                        // 如果在前 10 名，顯示排行榜
+                        // 如果在前 10 名，預設顯示排行榜
                         if (rank <= 10) {
                             setShowLeaderboard(true)
                         }
+                    } else {
+                        console.warn('無法在排行榜中找到剛提交的成績', gameResult)
                     }
+
                 } catch (e) {
                     console.error('載入排行榜失敗', e)
                 }
@@ -131,78 +123,112 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
         }
 
         autoSubmit()
-    }, [])
+    }, []) // Run once
 
     return (
         <div className="game-complete">
             <div className="complete-container">
-                <div className="confetti-icon">🎊</div>
-                <h1>恭喜通關！</h1>
-                <p className="subtitle">太棒了，你完成了挑戰！</p>
 
-                <div className="final-stats">
-                    <div className="final-stat">
-                        <span className="label">所需時間</span>
-                        <span className="value">{result.time}</span>
-                    </div>
-                    <div className="final-stat">
-                        <span className="label">移動步數</span>
-                        <span className="value">{result.moves}</span>
-                    </div>
-                    <div className="final-stat">
-                        <span className="label">特殊模式</span>
-                        <span className="value">{result.specialModes || '無'}</span>
-                    </div>
+                {/* Header */}
+                <header className="complete-header">
+                    <div className="confetti-icon">🎊</div>
+                    <h1>CONGRATS!</h1>
+                    <span className="complete-title-zh">恭喜完成了挑戰</span>
 
                     {isNewRecord && (
-                        <div className="new-record-badge">新紀錄！👑</div>
-                    )}
-
-                    <div className="submission-status">
-                        {isSubmitting ? (
-                            <span className="submitting">正在上傳成績到 Google Sheets...</span>
-                        ) : submitStatus === 'success' ? (
-                            <>
-                                <span className="success">✅ 成績已成功上傳！</span>
-                                {playerRank && playerRank <= 10 && (
-                                    <div className="rank-notification">
-                                        太神了！您目前的排名是第 <span className="rank-highlight">{playerRank}</span> 名！
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <span className="error">❌ 成績上傳失敗，請檢查網路連線。</span>
-                        )}
-                    </div>
-
-                    {showLeaderboard && (
-                        <div className="complete-leaderboard">
-                            <HighScores
-                                mode={settings.mode}
-                                imageIdentifier={settings.imageIdentifier || ''}
-                                imageDisplayName={settings.imageDisplayName}
-                                size={settings.size}
-                                preloadedScores={leaderboardScores}
-                                highlightResult={{
-                                    ...result,
-                                    type: 'GameResult',
-                                    playerId: player.id,
-                                    level: leaderboardScores[0]?.level || '',
-                                    timestamp: '', // 不重要，HighScores 使用 playerId+score 比對
-                                } as any}
-                            />
+                        <div className="new-record-highlight">
+                            <div className="new-record-badge">
+                                <span>👑</span> NEW RECORD
+                            </div>
                         </div>
                     )}
+                </header>
 
-                    <div className="complete-buttons">
-                        <button className="play-again-btn" onClick={onPlayAgain}>
-                            再玩一次
-                        </button>
-                        <button className="back-menu-btn" onClick={onBackToSetup}>
-                            返回主選單
-                        </button>
+                {/* Stats Grid */}
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <span className="stat-icon">⏱️</span>
+                        <span className="stat-label">TIME</span>
+                        <span className="stat-value">{result.time}</span>
+                    </div>
+                    <div className="stat-card">
+                        <span className="stat-icon">👣</span>
+                        <span className="stat-label">MOVES</span>
+                        <span className="stat-value">{result.moves}</span>
+                    </div>
+                    <div className="stat-card">
+                        <span className="stat-icon">✨</span>
+                        <span className="stat-label">SPECIAL</span>
+                        <span className="stat-value special">{result.specialModes || 'None'}</span>
                     </div>
                 </div>
+
+                {/* Status & Ranking */}
+                <div className="status-section">
+                    {isSubmitting ? (
+                        <div className="loading-pill">
+                            <div className="spinner"></div>
+                            <span>上傳成績中...</span>
+                        </div>
+                    ) : submitStatus === 'success' ? (
+                        <div className="success-message">
+                            <div>✅ 成績已上傳</div>
+                            {playerRank ? (
+                                <div className="rank-info">
+                                    當前排名 <span className="rank-highlight">#{playerRank}</span>
+                                </div>
+                            ) : (
+                                <div className="rank-info" style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                                    (未能在排行榜中定位排名)
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="error-message">
+                            ❌ 上傳失敗，請檢查網路
+                        </div>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="action-buttons">
+                    <button className="btn-primary" onClick={onPlayAgain}>
+                        再玩一次
+                    </button>
+                    <button className="btn-secondary" onClick={onBackToSetup}>
+                        返回主選單
+                    </button>
+                </div>
+
+                {/* Leaderboard Toggle Area */}
+                {!showLeaderboard && submitStatus === 'success' && (
+                    <button
+                        className="btn-text"
+                        style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={() => setShowLeaderboard(true)}
+                    >
+                        查看排行榜
+                    </button>
+                )}
+
+                {showLeaderboard && (
+                    <div className="leaderboard-section">
+                        <HighScores
+                            mode={settings.mode}
+                            imageIdentifier={settings.imageIdentifier || ''}
+                            imageDisplayName={settings.imageDisplayName}
+                            size={settings.size}
+                            preloadedScores={leaderboardScores}
+                            highlightResult={{
+                                ...result,
+                                type: 'GameResult',
+                                playerId: player.id,
+                                level: leaderboardScores[0]?.level || '',
+                                timestamp: '',
+                            } as any}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     )

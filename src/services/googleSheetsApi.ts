@@ -123,7 +123,6 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
                 level: String(item.level || item['關卡'] || item['關卡名稱'] || level),
                 time: finalDisplayTime,
                 moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
-                moves: parseInt(String(item.moves || item['步數'] || item['移動步數'] || item['次數'] || '0')),
                 cheatCount: parseInt(String(item.cheatCount || item['作弊次數'] || item['作弊'] || '0')),
                 timestamp: dateStr,
                 specialModes: String(getValue(['specialModes', 'special', '特殊', '特殊模式']) || item.specialModes || '')
