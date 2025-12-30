@@ -45,9 +45,35 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const data = await response.json()
         const rawRecords = data.records || data.data || []
 
+        if (rawRecords.length > 0) {
+            console.log('[API Debug] Raw Record Sample:', rawRecords[0]);
+            console.log('[API Debug] Available Keys:', Object.keys(rawRecords[0]));
+        }
+
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
-            const timeRaw = String(item.time || item['通關時間'] || item['時間'] || '00:00');
-            const tsRaw = String(item.timestamp || item.Timestamp || item.date || item.Date || item['提交時間'] || item['時間戳記'] || item['日期'] || '');
+            // Helper to find value loosely
+            const getValue = (targetKeys: string[]) => {
+                const itemKeys = Object.keys(item);
+                // 1. Exact match
+                for (const k of targetKeys) {
+                    if (item[k] !== undefined) return item[k];
+                }
+                // 2. Case-insensitive & trimmed match
+                const normalizedTargetKeys = targetKeys.map(k => k.toLowerCase().replace(/\s/g, ''));
+                for (const k of itemKeys) {
+                    const normalizedK = k.toLowerCase().replace(/\s/g, '');
+                    if (normalizedTargetKeys.includes(normalizedK)) return item[k];
+                }
+                return undefined;
+            };
+
+            const timeRaw = String(getValue(['time', '通關時間', '時間']) || item.time || item['通關時間'] || '00:00');
+
+            // 擴充 timestamp 的關鍵字
+            const tsRaw = String(
+                getValue(['timestamp', 'Timestamp', 'date', 'Date', '提交時間', '時間戳記', '日期', 'created_at', 'createdAt', 'Submission Time']) ||
+                item.timestamp || ''
+            );
 
             let formattedTime = '00:00';
             let dateStr = '';
