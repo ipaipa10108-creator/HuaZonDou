@@ -150,10 +150,8 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                         <span className="value">{result.moves}</span>
                     </div>
                     <div className="final-stat">
-                        <div className="final-stat">
-                            <span className="label">特殊模式</span>
-                            <span className="value">{result.specialModes || '無'}</span>
-                        </div>
+                        <span className="label">特殊模式</span>
+                        <span className="value">{result.specialModes || '無'}</span>
                     </div>
 
                     {isNewRecord && (
@@ -206,5 +204,6 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                     </div>
                 </div>
             </div>
-            )
+        </div>
+    )
 }
