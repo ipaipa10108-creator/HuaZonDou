@@ -47,7 +47,7 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
 
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
             const timeRaw = String(item.time || item['通關時間'] || item['時間'] || '00:00');
-            const tsRaw = String(item.timestamp || item['提交時間'] || item['時間戳記'] || '');
+            const tsRaw = String(item.timestamp || item.Timestamp || item.date || item.Date || item['提交時間'] || item['時間戳記'] || item['日期'] || '');
 
             let formattedTime = '00:00';
             let dateStr = '';
