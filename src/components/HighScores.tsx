@@ -109,7 +109,7 @@ export default function HighScores({ mode, imageIdentifier, imageDisplayName, si
                                         {score.specialModes ? (
                                             <span className="special-modes">{score.specialModes}</span>
                                         ) : score.cheatCount > 0 ? (
-                                            <span className="cheat-badge used">{score.cheatCount}次</span>
+                                            <span className="special-modes">🃏{score.cheatCount}</span>
                                         ) : (
                                             <span className="cheat-badge none">無</span>
                                         )}

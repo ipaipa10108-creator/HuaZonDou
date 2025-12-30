@@ -16,8 +16,6 @@ function App() {
     const [gameResult, setGameResult] = useState<{
         time: string
         moves: number
-        time: string
-        moves: number
         cheatCount: number
         specialModes?: string
     } | null>(null)
@@ -59,9 +57,6 @@ function App() {
 
         setGameResult({
             time: formatTime(gameState.elapsedSeconds),
-            moves: gameState.moves,
-            moves: gameState.moves,
-            cheatCount: gameState.cheatCount,
             moves: gameState.moves,
             cheatCount: gameState.cheatCount,
             specialModes: [
