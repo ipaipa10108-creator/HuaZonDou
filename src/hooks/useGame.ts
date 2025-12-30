@@ -10,7 +10,10 @@ export function useGame(settings: GameSettings) {
             emptyPos,
             moves: 0,
             startTime: null,
+            moves: 0,
+            startTime: null,
             elapsedSeconds: 0,
+            accumulatedTime: 0, // 新增：累積時間（用於暫停/懲罰）
             cheatCount: 0,
             cheatEnabled: false,
             status: 'idle',
@@ -27,8 +30,9 @@ export function useGame(settings: GameSettings) {
             timerRef.current = window.setInterval(() => {
                 setGameState((prev: GameState) => {
                     if (!prev.startTime) return prev
-                    const elapsed = Math.floor((Date.now() - new Date(prev.startTime).getTime()) / 1000)
-                    return { ...prev, elapsedSeconds: elapsed }
+                    // 計算方式：累積時間 + 本次區段時間
+                    const currentSessionTime = Math.floor((Date.now() - new Date(prev.startTime).getTime()) / 1000)
+                    return { ...prev, elapsedSeconds: prev.accumulatedTime + currentSessionTime }
                 })
             }, 1000)
         }
@@ -46,6 +50,8 @@ export function useGame(settings: GameSettings) {
         setGameState((prev: GameState) => ({
             ...prev,
             startTime: new Date(),
+            accumulatedTime: 0,
+            elapsedSeconds: 0,
             status: 'playing',
         }))
     }, [])
@@ -156,6 +162,7 @@ export function useGame(settings: GameSettings) {
             emptyPos,
             moves: 0,
             startTime: new Date(),
+            accumulatedTime: 0,
             elapsedSeconds: 0,
             cheatCount: 0,
             cheatEnabled: false,
@@ -179,11 +186,36 @@ export function useGame(settings: GameSettings) {
 
         setGameState((prev: GameState) => {
             const newIsBlindMode = !prev.isBlindMode
-            return {
-                ...prev,
-                isBlindMode: newIsBlindMode,
-                // 開啟盲解模式時增加 10 秒懲罰
-                elapsedSeconds: newIsBlindMode ? prev.elapsedSeconds + 10 : prev.elapsedSeconds
+
+            if (newIsBlindMode) {
+                // 開啟盲解：暫停計時，並加 10 秒
+                // 當前總秒數 = 累積 + (現在 - 開始)
+                // 但因為開啟盲解那一刻要暫停，所以把「當前總秒數 + 10」存入 accumulatedTime
+                // 並將 startTime 設為 null (暫停)
+
+                let currentSessionTime = 0
+                if (prev.startTime) {
+                    currentSessionTime = Math.floor((Date.now() - new Date(prev.startTime).getTime()) / 1000)
+                }
+
+                const newAccumulated = prev.accumulatedTime + currentSessionTime + 10
+
+                return {
+                    ...prev,
+                    isBlindMode: true,
+                    accumulatedTime: newAccumulated,
+                    elapsedSeconds: newAccumulated, // 顯示時間立即更新
+                    startTime: null // 停止計時
+                }
+            } else {
+                // 關閉盲解：恢復計時
+                // startTime 設為現在
+                // accumulatedTime 保持不變（就是剛才暫停時的值）
+                return {
+                    ...prev,
+                    isBlindMode: false,
+                    startTime: new Date()
+                }
             }
         })
     }, [gameState.status])

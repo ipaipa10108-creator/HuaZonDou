@@ -32,6 +32,7 @@ export interface GameState {
     moves: number;
     startTime: Date | null;
     elapsedSeconds: number;
+    accumulatedTime: number;
     cheatCount: number;
     cheatEnabled: boolean;
     status: GameStatus;

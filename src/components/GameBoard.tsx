@@ -48,31 +48,13 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
 
     // 處理轉珠模式的拖曳開始
     const handleDragStart = useCallback((row: number, col: number, e: React.PointerEvent) => {
-        if (!gameState.isSwapMode || gameState.board[row][col] !== 0) return
-        e.preventDefault() // 防止捲動
+        if (!gameState.isSwapMode) return
+        // 只允許拖曳空白格（珠子）
+        if (gameState.board[row][col] !== 0) return
+
+        e.preventDefault()
         setIsDragging(true)
     }, [gameState.isSwapMode, gameState.board])
-
-    // 處理轉珠模式的拖曳移動進出
-    const handlePointerEnter = useCallback((row: number, col: number) => {
-        if (!isDragging || !gameState.isSwapMode) return
-
-        // 嘗試移動（交換）
-        // moveBlock 內部會檢查是否相鄰，若相鄰就會交換並返回結果
-        const result = moveBlock(row, col)
-        if (result?.success) {
-            playMoveSound()
-        }
-    }, [isDragging, gameState.isSwapMode, moveBlock, playMoveSound])
-
-    // 處理拖曳結束（全域）
-    useEffect(() => {
-        const handleGlobalPointerUp = () => {
-            setIsDragging(false)
-        }
-        window.addEventListener('pointerup', handleGlobalPointerUp)
-        return () => window.removeEventListener('pointerup', handleGlobalPointerUp)
-    }, [])
 
     const puzzleContainerRef = useRef<HTMLDivElement>(null)
 
@@ -94,6 +76,46 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
             stopGame()
         }
     }, [settings, processImage, stopGame])
+
+    // 處理轉珠模式的拖曳邏輯 (Mobile & Desktop)
+    useEffect(() => {
+        if (!isDragging || !gameState.isSwapMode) return
+
+        const handlePointerMove = (e: PointerEvent) => {
+            e.preventDefault() // 防止捲動
+
+            // 取得游標下的元素
+            const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement
+            if (!target) return
+
+            // 檢查是否為拼圖方塊
+            const block = target.closest('.puzzle-block') as HTMLElement
+            if (!block) return
+
+            const row = parseInt(block.dataset.row || '-1')
+            const col = parseInt(block.dataset.col || '-1')
+
+            if (row === -1 || col === -1) return
+
+            // 嘗試移動
+            const result = moveBlock(row, col)
+            if (result?.success) {
+                playMoveSound()
+            }
+        }
+
+        const handlePointerUp = () => {
+            setIsDragging(false)
+        }
+
+        window.addEventListener('pointermove', handlePointerMove, { passive: false })
+        window.addEventListener('pointerup', handlePointerUp)
+
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove)
+            window.removeEventListener('pointerup', handlePointerUp)
+        }
+    }, [isDragging, gameState.isSwapMode, moveBlock, playMoveSound])
 
     // 開始計時
     useEffect(() => {
@@ -247,8 +269,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
                                 className={`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''} ${isBlindMasked ? 'blind-masked' : ''} ${isSwapBead ? 'swap-bead' : ''}`}
                                 onClick={() => handleBlockClick(row, col)}
                                 onPointerDown={(e) => handleDragStart(row, col, e)}
-                                onPointerEnter={() => handlePointerEnter(row, col)}
-                                style={{ touchAction: gameState.isSwapMode ? 'none' : 'auto' }} // 轉珠模式下禁止觸控捲動以利拖曳
+                                style={{ touchAction: 'none' }} // 確保全時禁止預設觸控行為，讓 pointermove 生效
                                 data-row={row}
                                 data-col={col}
                                 data-value={value}
