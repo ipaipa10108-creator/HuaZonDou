@@ -40,7 +40,8 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
     }
 
     try {
-        const url = `${GOOGLE_SCRIPT_URL}?action=leaderboard&level=${encodeURIComponent(level)}`
+        // 加入時間戳記避免瀏覽器快取
+        const url = `${GOOGLE_SCRIPT_URL}?action=leaderboard&level=${encodeURIComponent(level)}&_t=${new Date().getTime()}`
         const response = await fetch(url)
         const data = await response.json()
         const rawRecords = data.records || data.data || []

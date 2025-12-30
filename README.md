@@ -83,22 +83,35 @@ function doGet(e) {
     const idIdx = headers.indexOf('ID');
     const cheatIdx = headers.indexOf('作弊次數');
     const moveIdx = Math.max(headers.indexOf('移動步數'), headers.indexOf('步數'));
-    const tsIdx = headers.indexOf('提交時間');
+    
+    // 強健的日期欄位搜尋：
+    let tsIdx = headers.indexOf('提交時間');
+    if (tsIdx === -1) tsIdx = headers.findIndex(h => String(h).includes('提交'));
+    if (tsIdx === -1) tsIdx = 5;
     
     // 過濾資料
     let records = rows.filter(row => {
       const rowLevel = String(row[levelIdx] || '');
       return rowLevel === level || rowLevel.replace(/\s/g, '') === level.replace(/\s/g, '');
-    }).map(row => ({
-      playerId: row[idIdx],
-      level: row[levelIdx],
-      time: String(row[timeIdx]), // 確保轉為字串
-      cheatCount: parseInt(row[cheatIdx] || 0),
-      moves: parseInt(row[moveIdx] || 0),
-      timestamp: row[tsIdx]
-    }));
+    }).map(row => {
+      let tsVal = row[tsIdx];
+      if (tsVal instanceof Date) {
+        tsVal = tsVal.toLocaleString('zh-TW', { hour12: false }); 
+      }
+      
+      return {
+        playerId: row[idIdx],
+        level: row[levelIdx],
+        time: String(row[timeIdx]), 
+        cheatCount: parseInt(row[cheatIdx] || 0),
+        moves: parseInt(row[moveIdx] || 0),
+        timestamp: String(tsVal || ''),
+        // === DEBUG 資訊 ===
+        debug_headers: headers, // 回傳標頭
+        debug_row: row          // 回傳整列資料
+      };
+    });
     
-    // 前端會再進行三維精準排序 (作弊 < 時間 < 步數)
     return createJsonResponse({ records: records });
   }
   return createJsonResponse({ status: 'ok' });
