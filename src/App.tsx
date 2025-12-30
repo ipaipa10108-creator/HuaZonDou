@@ -62,11 +62,13 @@ function App() {
             moves: gameState.moves,
             moves: gameState.moves,
             cheatCount: gameState.cheatCount,
+            moves: gameState.moves,
+            cheatCount: gameState.cheatCount,
             specialModes: [
-                gameState.hasUsedCheatMode ? '🃏' : '', // 金手指
+                gameState.hasUsedCheatMode ? `🃏${gameState.cheatCount}` : '', // 金手指 + 次數
                 gameState.hasUsedSwapMode ? '🔮' : '',  // 轉珠
                 gameState.hasUsedBlindMode ? '😎' : ''  // 盲解
-            ].join('') // 串接，如 "🃏🔮"
+            ].join('') // 串接，如 "🃏3🔮"
         })
         setCurrentView('complete')
     }
