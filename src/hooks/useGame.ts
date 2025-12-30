@@ -14,6 +14,8 @@ export function useGame(settings: GameSettings) {
             cheatCount: 0,
             cheatEnabled: false,
             status: 'idle',
+            isBlindMode: false,
+            isSwapMode: false,
         }
     })
 
@@ -21,7 +23,7 @@ export function useGame(settings: GameSettings) {
 
     // 計時器
     useEffect(() => {
-        if (gameState.status === 'playing' && gameState.startTime) {
+        if (gameState.status === 'playing' && gameState.startTime && !gameState.isBlindMode) {
             timerRef.current = window.setInterval(() => {
                 setGameState((prev: GameState) => {
                     if (!prev.startTime) return prev
@@ -158,6 +160,8 @@ export function useGame(settings: GameSettings) {
             cheatCount: 0,
             cheatEnabled: false,
             status: 'playing',
+            isBlindMode: false,
+            isSwapMode: false,
         })
     }, [settings.size])
 
@@ -169,6 +173,31 @@ export function useGame(settings: GameSettings) {
         }
     }, [])
 
+    // 切換盲解模式
+    const toggleBlindMode = useCallback(() => {
+        if (gameState.status !== 'playing') return
+
+        setGameState((prev: GameState) => {
+            const newIsBlindMode = !prev.isBlindMode
+            return {
+                ...prev,
+                isBlindMode: newIsBlindMode,
+                // 開啟盲解模式時增加 10 秒懲罰
+                elapsedSeconds: newIsBlindMode ? prev.elapsedSeconds + 10 : prev.elapsedSeconds
+            }
+        })
+    }, [gameState.status])
+
+    // 切換轉珠模式
+    const toggleSwapMode = useCallback(() => {
+        if (gameState.status !== 'playing') return
+
+        setGameState((prev: GameState) => ({
+            ...prev,
+            isSwapMode: !prev.isSwapMode
+        }))
+    }, [gameState.status])
+
     return {
         gameState,
         startGame,
@@ -178,5 +207,7 @@ export function useGame(settings: GameSettings) {
         getHintMove,
         resetGame,
         stopGame,
+        toggleBlindMode,
+        toggleSwapMode,
     }
 }

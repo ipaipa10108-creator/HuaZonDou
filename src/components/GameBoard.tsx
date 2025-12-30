@@ -23,6 +23,8 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
         getHintMove,
         resetGame,
         stopGame,
+        toggleBlindMode,
+        toggleSwapMode,
     } = useGame(settings)
 
     const {
@@ -42,6 +44,35 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
     const [cheatFirstBlock, setCheatFirstBlock] = useState<Position | null>(null)
     const [showOriginal, setShowOriginal] = useState(false)
     const [isReady, setIsReady] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
+
+    // 處理轉珠模式的拖曳開始
+    const handleDragStart = useCallback((row: number, col: number, e: React.PointerEvent) => {
+        if (!gameState.isSwapMode || gameState.board[row][col] !== 0) return
+        e.preventDefault() // 防止捲動
+        setIsDragging(true)
+    }, [gameState.isSwapMode, gameState.board])
+
+    // 處理轉珠模式的拖曳移動進出
+    const handlePointerEnter = useCallback((row: number, col: number) => {
+        if (!isDragging || !gameState.isSwapMode) return
+
+        // 嘗試移動（交換）
+        // moveBlock 內部會檢查是否相鄰，若相鄰就會交換並返回結果
+        const result = moveBlock(row, col)
+        if (result?.success) {
+            playMoveSound()
+        }
+    }, [isDragging, gameState.isSwapMode, moveBlock, playMoveSound])
+
+    // 處理拖曳結束（全域）
+    useEffect(() => {
+        const handleGlobalPointerUp = () => {
+            setIsDragging(false)
+        }
+        window.addEventListener('pointerup', handleGlobalPointerUp)
+        return () => window.removeEventListener('pointerup', handleGlobalPointerUp)
+    }, [])
 
     const puzzleContainerRef = useRef<HTMLDivElement>(null)
 
@@ -204,16 +235,25 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
                         const isHint = hintPos?.row === row && hintPos?.col === col
                         const isCheatSelected = cheatFirstBlock?.row === row && cheatFirstBlock?.col === col
 
+                        // 盲解模式：所有格子在非空時都顯示背面（木紋）
+                        const isBlindMasked = gameState.isBlindMode && !isEmpty
+
+                        // 轉珠模式：空白格子變為可拖曳的珠子
+                        const isSwapBead = gameState.isSwapMode && isEmpty
+
                         return (
                             <div
                                 key={`${row}-${col}`}
-                                className={`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''}`}
+                                className={`puzzle-block ${isEmpty ? `empty color-${colorTheme}` : ''} ${settings.mode === 'image' ? 'image-block' : ''} ${isHint ? 'hint' : ''} ${isCheatSelected ? 'cheat-selected' : ''} ${isBlindMasked ? 'blind-masked' : ''} ${isSwapBead ? 'swap-bead' : ''}`}
                                 onClick={() => handleBlockClick(row, col)}
+                                onPointerDown={(e) => handleDragStart(row, col, e)}
+                                onPointerEnter={() => handlePointerEnter(row, col)}
+                                style={{ touchAction: gameState.isSwapMode ? 'none' : 'auto' }} // 轉珠模式下禁止觸控捲動以利拖曳
                                 data-row={row}
                                 data-col={col}
                                 data-value={value}
                             >
-                                {!isEmpty && (
+                                {!isEmpty && !isBlindMasked && (
                                     settings.mode === 'number' ? (
                                         <span>{value}</span>
                                     ) : (
@@ -249,6 +289,18 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
                     <button onClick={handleColorChange}>🎨 換色</button>
                     <button onClick={toggleMute} className={muted ? 'active' : ''}>
                         {muted ? '🔇 靜音' : '🔊 音效'}
+                    </button>
+                    <button
+                        onClick={toggleBlindMode}
+                        className={gameState.isBlindMode ? 'active' : ''}
+                    >
+                        😎 盲解
+                    </button>
+                    <button
+                        onClick={toggleSwapMode}
+                        className={gameState.isSwapMode ? 'active' : ''}
+                    >
+                        🔮 轉珠
                     </button>
                     <button
                         onClick={handleToggleCheat}

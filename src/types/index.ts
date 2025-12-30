@@ -35,6 +35,8 @@ export interface GameState {
     cheatCount: number;
     cheatEnabled: boolean;
     status: GameStatus;
+    isBlindMode: boolean;
+    isSwapMode: boolean;
 }
 
 // 高分記錄
