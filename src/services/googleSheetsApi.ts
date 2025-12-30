@@ -46,10 +46,7 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
         const data = await response.json()
         const rawRecords = data.records || data.data || []
 
-        if (rawRecords.length > 0) {
-            console.log('[API Debug] Raw Record Sample:', rawRecords[0]);
-            console.log('[API Debug] Available Keys:', Object.keys(rawRecords[0]));
-        }
+
 
         const mappedRecords: GameResult[] = rawRecords.map((item: any) => {
             // Helper to find value loosely
@@ -99,17 +96,20 @@ export async function getLeaderboard(level: string): Promise<GameResult[]> {
                 }
             }
 
-            // 2. 處理提交日期 (僅提取 YYYY/MM/DD)
+            // 2. 處理提交日期 (強制使用 Regex 提取 YYYY/MM/DD，忽略後續時間或中文)
             if (tsRaw) {
-                try {
-                    const d = new Date(tsRaw);
-                    if (!isNaN(d.getTime())) {
-                        dateStr = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
-                    }
-                } catch (e) {
-                    const match = tsRaw.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+                // 優先尋找 YYYY/MM/DD 或 YYYY-MM-DD
+                let match = tsRaw.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                if (match) {
+                    dateStr = `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
+                } else {
+                    // 若無年份，嘗試尋找 MM/DD
+                    match = tsRaw.match(/(\d{1,2})[\/\-](\d{1,2})/);
                     if (match) {
-                        dateStr = `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
+                        // 假設為今年 ?? 或是直接顯示原字串
+                        // 這裡為了保險起見，若無法識別完整日期，就保留原字串的前10個字元作為參考，或者給空
+                        // 但既然 raw data 明顯有日期，通常上面的 regex 就會中了
+                        dateStr = tsRaw.split(' ')[0]; // 簡單 fallback
                     }
                 }
             }

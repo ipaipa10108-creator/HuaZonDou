@@ -105,10 +105,7 @@ function doGet(e) {
         time: String(row[timeIdx]), 
         cheatCount: parseInt(row[cheatIdx] || 0),
         moves: parseInt(row[moveIdx] || 0),
-        timestamp: String(tsVal || ''),
-        // === DEBUG 資訊 ===
-        debug_headers: headers, // 回傳標頭
-        debug_row: row          // 回傳整列資料
+        timestamp: String(tsVal || '') // 強制轉字串
       };
     });
     
