@@ -100,7 +100,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
 
             // 節流與距離檢查：防止過度靈敏
             const now = Date.now()
-            if (now - lastSwapTime.current < 250) return // 250ms 冷卻時間
+            if (now - lastSwapTime.current < 100) return // 原本為250ms 冷卻時間
 
             // 嘗試移動
             const result = moveBlock(row, col)
