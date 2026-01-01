@@ -57,6 +57,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
     }, [gameState.isSwapMode, gameState.board])
 
     const puzzleContainerRef = useRef<HTMLDivElement>(null)
+    const lastSwapTime = useRef<number>(0)
 
     // 初始化遊戲
     useEffect(() => {
@@ -97,10 +98,15 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
 
             if (row === -1 || col === -1) return
 
+            // 節流與距離檢查：防止過度靈敏
+            const now = Date.now()
+            if (now - lastSwapTime.current < 250) return // 250ms 冷卻時間
+
             // 嘗試移動
             const result = moveBlock(row, col)
             if (result?.success) {
                 playMoveSound()
+                lastSwapTime.current = now
             }
         }
 

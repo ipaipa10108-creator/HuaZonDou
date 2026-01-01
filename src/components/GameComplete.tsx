@@ -152,7 +152,7 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                         </div>
                     )}
                     <span className="level-name">
-                        {settings.imageDisplayName || (settings.mode === 'number' ? '數字模式' : '圖片模式')}
+                        {settings.imageDisplayName || (settings.mode === 'number' ? `數字模式 (${settings.size}x${settings.size})` : '圖片模式')}
                     </span>
                 </div>
 
