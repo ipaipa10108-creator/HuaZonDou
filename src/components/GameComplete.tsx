@@ -144,6 +144,18 @@ export default function GameComplete({ settings, result, player, onPlayAgain, on
                     )}
                 </header>
 
+                {/* Level Info */}
+                <div className="level-info">
+                    {settings.imageSource && (
+                        <div className="level-thumbnail-wrapper">
+                            <img src={settings.imageSource} alt="Level Thumbnail" className="level-thumbnail" />
+                        </div>
+                    )}
+                    <span className="level-name">
+                        {settings.imageDisplayName || (settings.mode === 'number' ? '數字模式' : '圖片模式')}
+                    </span>
+                </div>
+
                 {/* Stats Grid */}
                 <div className="stats-grid">
                     <div className="stat-card">

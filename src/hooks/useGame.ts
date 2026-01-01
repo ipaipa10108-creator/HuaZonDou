@@ -120,14 +120,15 @@ export function useGame(settings: GameSettings) {
         newBoard[row1][col1] = value2
         newBoard[row2][col2] = value1
 
+        const isWin = checkWin(newBoard)
+
         setGameState((prev: GameState) => ({
             ...prev,
             board: newBoard,
             moves: prev.moves + 1,
-            board: newBoard,
-            moves: prev.moves + 1,
             cheatCount: prev.cheatCount + 1,
             hasUsedCheatMode: true,
+            status: isWin ? 'complete' : 'playing',
         }))
 
         return true
