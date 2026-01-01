@@ -96,6 +96,7 @@ function App() {
             {currentView === 'game' && gameSettings && player && (
                 <GameBoard
                     settings={gameSettings}
+                    player={player}
                     onComplete={handleGameComplete}
                     onBackToSetup={handleBackToSetup}
                     soundManager={soundManager}

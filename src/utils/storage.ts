@@ -5,9 +5,33 @@ const STORAGE_KEYS = {
     HIGH_SCORES: 'puzzleHighScores',
     MUTED: 'huazondou_muted',
     PIXABAY_KEY: 'huazondou_pixabay_key',
+    SENSITIVITY: 'huazondou_sensitivity',
 } as const
 
 export const storage = {
+    // ... existing methods ...
+
+    // 靈敏度設定
+    getSwapSensitivity(): { enabled: boolean; value: number } {
+        try {
+            const data = localStorage.getItem(STORAGE_KEYS.SENSITIVITY)
+            if (data) {
+                return JSON.parse(data)
+            }
+            // 預設關閉，若開啟則預設 30ms
+            return { enabled: false, value: 30 }
+        } catch {
+            return { enabled: false, value: 30 }
+        }
+    },
+
+    setSwapSensitivity(settings: { enabled: boolean; value: number }): void {
+        try {
+            localStorage.setItem(STORAGE_KEYS.SENSITIVITY, JSON.stringify(settings))
+        } catch (e) {
+            console.warn('儲存靈敏度設定失敗:', e)
+        }
+    },
     // 玩家資訊
     getPlayer(): Player | null {
         try {

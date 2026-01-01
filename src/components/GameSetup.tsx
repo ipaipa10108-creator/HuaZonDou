@@ -3,6 +3,7 @@ import { GameSettings, GameMode, Player, PresetImage, RemoteLevel } from '../typ
 import { sanitizeFilenameForKey, preprocessImage } from '../utils/imageUtils'
 import { getLevels } from '../services/googleSheetsApi'
 import PixabaySearch from './PixabaySearch'
+import SettingsModal from './SettingsModal'
 import './GameSetup.css'
 
 interface GameSetupProps {
@@ -11,6 +12,7 @@ interface GameSetupProps {
     onLogout: () => void
 }
 
+// ... (PRESET_IMAGES and SIZES arrays remain unchanged) ...
 // 預設圖片列表
 const PRESET_IMAGES: PresetImage[] = [
     { name: 'C9', src: 'images/C9.webp' },
@@ -41,6 +43,7 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
     const [remoteLevels, setRemoteLevels] = useState<RemoteLevel[]>([])
     const [isLoadingLevels, setIsLoadingLevels] = useState(false)
     const [showPixabaySearch, setShowPixabaySearch] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const basePath = (import.meta as any).env.BASE_URL || '/'
 
@@ -161,6 +164,13 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                     <h1>燒腦華榮道</h1>
                     <div className="player-info">
                         <span>玩家: {player.id}</span>
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="logout-btn"
+                            style={{ marginRight: '8px' }}
+                        >
+                            設定
+                        </button>
                         <button onClick={onLogout} className="logout-btn">登出</button>
                     </div>
                 </header>
@@ -316,6 +326,13 @@ export default function GameSetup({ player, onStartGame, onLogout }: GameSetupPr
                 <PixabaySearch
                     onSelect={handlePixabaySelect}
                     onClose={() => setShowPixabaySearch(false)}
+                />
+            )}
+
+            {showSettings && (
+                <SettingsModal
+                    onClose={() => setShowSettings(false)}
+                    onSave={() => { }}
                 />
             )}
         </div>

@@ -1,19 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { GameSettings, GameState, Position, ColorTheme } from '../types'
+import { GameSettings, GameState, Position, ColorTheme, Player } from '../types'
 import { useGame } from '../hooks/useGame'
 import { useSoundManager } from '../hooks/useSoundManager'
 import { useImageProcessor } from '../hooks/useImageProcessor'
+import { storage } from '../utils/storage'
 import HighScores from './HighScores'
+import SettingsModal from './SettingsModal'
 import './GameBoard.css'
 
 interface GameBoardProps {
     settings: GameSettings
+    player: Player
     onComplete: (gameState: GameState) => void
     onBackToSetup: () => void
     soundManager: any
 }
 
-export default function GameBoard({ settings, onComplete, onBackToSetup, soundManager }: GameBoardProps) {
+export default function GameBoard({ settings, player, onComplete, onBackToSetup, soundManager }: GameBoardProps) {
+    // ... existing hooks ...
     const {
         gameState,
         startGame,
@@ -45,8 +49,20 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
     const [showOriginal, setShowOriginal] = useState(false)
     const [isReady, setIsReady] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
 
-    // 處理轉珠模式的拖曳開始
+    // Sensitivity Ref
+    const sensitivityRef = useRef<{ enabled: boolean; value: number }>({ enabled: false, value: 30 })
+
+    const updateSensitivity = useCallback(() => {
+        sensitivityRef.current = storage.getSwapSensitivity()
+    }, [])
+
+    useEffect(() => {
+        updateSensitivity()
+    }, [updateSensitivity])
+
+    // ... handleDragStart ...
     const handleDragStart = useCallback((row: number, col: number, e: React.PointerEvent) => {
         if (!gameState.isSwapMode) return
         // 只允許拖曳空白格（珠子）
@@ -59,7 +75,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
     const puzzleContainerRef = useRef<HTMLDivElement>(null)
     const lastSwapTime = useRef<number>(0)
 
-    // 初始化遊戲
+    // ... initGame useEffect ...
     useEffect(() => {
         const initGame = async () => {
             if (settings.mode === 'image' && settings.imageSource) {
@@ -100,7 +116,11 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
 
             // 節流與距離檢查：防止過度靈敏
             const now = Date.now()
-            if (now - lastSwapTime.current < 25) return // 原本為250ms 冷卻時間
+
+            // 使用設定的靈敏度
+            const threshold = sensitivityRef.current.enabled ? sensitivityRef.current.value : 0 // 若關閉則無冷卻(0)
+
+            if (now - lastSwapTime.current < threshold) return
 
             // 嘗試移動
             const result = moveBlock(row, col)
@@ -123,6 +143,7 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
         }
     }, [isDragging, gameState.isSwapMode, moveBlock, playMoveSound])
 
+    // ... other handlers ...
     // 開始計時
     useEffect(() => {
         if (isReady && gameState.status === 'idle') {
@@ -139,19 +160,6 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
             onComplete(gameState)
         }
     }, [gameState.status, onComplete, playWinSound, stopGame])
-    // 注意：gameState 作為依賴項，當它變為 complete 時觸發。
-    // onComplete 應該會處理這個 gameState，我們不需要在這裡修改它，
-    // 因為 GameState 已經包含了 hasUsed... 標誌。
-    // 但是 HighScores 需要的是 GameResult 結構，這通常在父組件(GameComplete?)處理，
-    // 或者我們確保 gameState 包含足夠資訊。
-    // `gameState` has `hasUsed...` flags.
-    // Parent `App` or `GameComplete` will construct `GameResult`.
-
-    // Self-correction: GameBoard calls onComplete(gameState).
-    // Let's check where onComplete goes. (Usually to App.tsx or GameSetup.tsx swapping views)
-    // Actually, looking at file list, there is GameComplete.tsx.
-    // I should check GameComplete.tsx too.
-
 
     // 處理方塊點擊
     const handleBlockClick = useCallback((row: number, col: number) => {
@@ -240,11 +248,20 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
         <div className="game-board">
             <div className="board-container">
                 <header className="board-header">
-                    <h1>{settings.imageDisplayName || '數字模式'}</h1>
-                    <span className="difficulty">{settings.size}×{settings.size}</span>
+                    <div className="header-info">
+                        <h1>{settings.imageDisplayName || '數字模式'}</h1>
+                        <span className="difficulty">{settings.size}×{settings.size}</span>
+                    </div>
+
+                    {/* Player Info & Settings */}
+                    <div className="board-player-info">
+                        <span>玩家: {player.id}</span>
+                        <button className="settings-btn" onClick={() => setShowSettings(true)}>設定</button>
+                    </div>
                 </header>
 
                 <div className="game-stats">
+                    {/* ... stats ... */}
                     <div className="stat">
                         <span className="stat-label">時間</span>
                         <span className="stat-value">{formatTime(gameState.elapsedSeconds)}</span>
@@ -358,6 +375,13 @@ export default function GameBoard({ settings, onComplete, onBackToSetup, soundMa
                     size={settings.size}
                 />
             </div>
+
+            {showSettings && (
+                <SettingsModal
+                    onClose={() => setShowSettings(false)}
+                    onSave={updateSensitivity}
+                />
+            )}
         </div >
     )
 }
