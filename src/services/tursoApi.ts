@@ -6,8 +6,13 @@ const VITE_TURSO_AUTH_TOKEN = import.meta.env.VITE_TURSO_AUTH_TOKEN || "";
 
 export const isTursoConfigured = !!VITE_TURSO_DB_URL && !!VITE_TURSO_AUTH_TOKEN;
 
+// 確保瀏覽器使用 HTTP(S) 而非 libsql:// (wss) 來避免跨域或通訊協定問題
+const formatUrlForWeb = (url: string) => {
+    return url.replace(/^libsql:\/\//, 'https://');
+};
+
 export const tursoClient = isTursoConfigured ? createClient({
-    url: VITE_TURSO_DB_URL,
+    url: formatUrlForWeb(VITE_TURSO_DB_URL),
     authToken: VITE_TURSO_AUTH_TOKEN,
 }) : null;
 
